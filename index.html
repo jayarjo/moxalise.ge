@@ -147,11 +147,15 @@
         }
 
         .card.pending {
-            border-left: 4px solid #e74c3c;
+            border-left: 4px solid #e74c3c; /* Red for pending */
         }
 
         .card.completed {
-            border-left: 4px solid #e74c3c;
+            border-left: 4px solid #2ecc71; /* Green for completed */
+        }
+
+        .card.empty-status {
+            border-left: 4px solid #95a5a6; /* Gray for empty status */
         }
 
         .source-link {
@@ -667,8 +671,17 @@
                 sampleData.forEach((item, index) => {
                     const card = document.createElement('div');
                     card.setAttribute('data-index', index);
-                    const isPending = item["სტატუსი (მომლოდინე/ დასრულებულია)"] === "მომლოდინე";
-                    card.className = `card ${isPending ? 'pending' : 'completed'}`;
+                    
+                    // Determine status class
+                    let statusClass = 'empty-status';
+                    const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
+                    if (status === "მომლოდინე") {
+                        statusClass = 'pending';
+                    } else if (status === "აღმოუჩინეს დახმარება") {
+                        statusClass = 'completed';
+                    }
+                    
+                    card.className = `card ${statusClass}`;
 
                     const needsTitle = item[`საჭიროება(ები)
 (საკვები, მედიკამენტები, ევაკუაცია, ექიმი, საწვავი, დათოლვა, სხვა)    `];
@@ -762,13 +775,23 @@
                                 const baseRadius = calculatePolygonSize(map);
                                 const offset = calculatePointOffset(groupIndex, baseRadius * 0.5);
                                 
-                                // Apply offset to center coordinates
                                 const offsetLon = item.lon + offset.x;
                                 const offsetLat = item.lat + offset.y;
                                 
-                                const isPending = item["სტატუსი (მომლოდინე/ დასრულებულია)"] === "მომლოდინე";
-                                const fillColor = '#e74c3c';
-                                const strokeColor = '#c0392b';
+                                // Determine colors based on status
+                                let fillColor, strokeColor;
+                                const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
+                                
+                                if (status === "მომლოდინე") {
+                                    fillColor = '#e74c3c';  // Red
+                                    strokeColor = '#c0392b';
+                                } else if (status === "აღმოუჩინეს დახმარება") {
+                                    fillColor = '#2ecc71';  // Green
+                                    strokeColor = '#27ae60';
+                                } else {
+                                    fillColor = '#95a5a6';  // Gray
+                                    strokeColor = '#7f8c8d';
+                                }
 
                                 return {
                                     type: 'Feature',
