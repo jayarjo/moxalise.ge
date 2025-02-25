@@ -6,6 +6,184 @@ let locationMarkers = [];
 // Add a global variable to track the user location marker
 let userLocationMarker = null;
 
+// Add global variables to track custom dropdowns
+let customDropdowns = {};
+
+// Function to create a custom dropdown with distribution data
+function createCustomDropdown(elementId, options, counts, placeholder, onChange) {
+    // Get the original select element
+    const originalSelect = document.getElementById(elementId);
+    if (!originalSelect) return null;
+    
+    // Get parent container
+    const parentContainer = originalSelect.parentNode;
+    
+    // Hide the original select element
+    originalSelect.style.display = 'none';
+    
+    // Create custom dropdown container
+    const dropdownContainer = document.createElement('div');
+    dropdownContainer.className = 'custom-dropdown';
+    dropdownContainer.setAttribute('data-for', elementId);
+    
+    // Create header
+    const header = document.createElement('div');
+    header.className = 'custom-dropdown-header';
+    
+    const selectedText = document.createElement('span');
+    selectedText.className = 'custom-dropdown-selected';
+    selectedText.textContent = placeholder;
+    
+    const icon = document.createElement('span');
+    icon.className = 'custom-dropdown-icon';
+    icon.textContent = '▼';
+    
+    header.appendChild(selectedText);
+    header.appendChild(icon);
+    
+    // Create dropdown menu
+    const menu = document.createElement('div');
+    menu.className = 'custom-dropdown-menu';
+    
+    // Calculate the maximum count for scaling the distribution bars
+    const maxCount = Math.max(...Object.values(counts));
+    
+    // Add "All" option at the top
+    const allItem = document.createElement('div');
+    allItem.className = 'custom-dropdown-item selected';
+    allItem.setAttribute('data-value', '');
+    
+    const allLabel = document.createElement('span');
+    allLabel.className = 'custom-dropdown-item-label';
+    allLabel.textContent = placeholder;
+    
+    const allCount = document.createElement('span');
+    allCount.className = 'custom-dropdown-item-count';
+    allCount.textContent = `${Object.values(counts).reduce((a, b) => a + b, 0)}`;
+    
+    const allDistribution = document.createElement('div');
+    allDistribution.className = 'custom-dropdown-distribution';
+    
+    const allBar = document.createElement('div');
+    allBar.className = 'custom-dropdown-distribution-bar';
+    allBar.style.width = '100%';
+    
+    allDistribution.appendChild(allBar);
+    allItem.appendChild(allLabel);
+    allItem.appendChild(allCount);
+    allItem.appendChild(allDistribution);
+    menu.appendChild(allItem);
+    
+    // Add other options
+    options.forEach(option => {
+        const count = counts[option] || 0;
+        const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
+        
+        const item = document.createElement('div');
+        item.className = 'custom-dropdown-item';
+        item.setAttribute('data-value', option);
+        
+        const label = document.createElement('span');
+        label.className = 'custom-dropdown-item-label';
+        label.textContent = option;
+        
+        const countSpan = document.createElement('span');
+        countSpan.className = 'custom-dropdown-item-count';
+        countSpan.textContent = count;
+        
+        const distribution = document.createElement('div');
+        distribution.className = 'custom-dropdown-distribution';
+        
+        const bar = document.createElement('div');
+        bar.className = 'custom-dropdown-distribution-bar';
+        bar.style.width = `${percentage}%`;
+        
+        distribution.appendChild(bar);
+        item.appendChild(label);
+        item.appendChild(countSpan);
+        item.appendChild(distribution);
+        menu.appendChild(item);
+    });
+    
+    // Add components to container
+    dropdownContainer.appendChild(header);
+    dropdownContainer.appendChild(menu);
+    
+    // Insert the custom dropdown after the original select
+    parentContainer.insertBefore(dropdownContainer, originalSelect.nextSibling);
+    
+    // Add event listeners
+    header.addEventListener('click', () => {
+        dropdownContainer.classList.toggle('open');
+        
+        // Close other dropdowns
+        document.querySelectorAll('.custom-dropdown.open').forEach(dropdown => {
+            if (dropdown !== dropdownContainer) {
+                dropdown.classList.remove('open');
+            }
+        });
+    });
+    
+    // Handle clicking outside the dropdown
+    document.addEventListener('click', (e) => {
+        if (!dropdownContainer.contains(e.target)) {
+            dropdownContainer.classList.remove('open');
+        }
+    });
+    
+    // Handle item selection
+    menu.querySelectorAll('.custom-dropdown-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const value = item.getAttribute('data-value');
+            selectedText.textContent = value || placeholder;
+            
+            // Update original select value
+            originalSelect.value = value;
+            
+            // Update selected item styling
+            menu.querySelectorAll('.custom-dropdown-item').forEach(i => {
+                i.classList.remove('selected');
+            });
+            item.classList.add('selected');
+            
+            // Close dropdown
+            dropdownContainer.classList.remove('open');
+            
+            // Trigger change event on original select
+            const event = new Event('change');
+            originalSelect.dispatchEvent(event);
+            
+            // Call onChange callback
+            if (onChange) onChange(value);
+        });
+    });
+    
+    return {
+        container: dropdownContainer,
+        setValue: (value) => {
+            const items = menu.querySelectorAll('.custom-dropdown-item');
+            items.forEach(item => {
+                if (item.getAttribute('data-value') === value) {
+                    item.click();
+                }
+            });
+        },
+        getValue: () => originalSelect.value
+    };
+}
+
+// Function to count occurrences of each value in a specific field
+function countFieldValues(data, fieldName) {
+    const counts = {};
+    data.forEach(item => {
+        const value = item[fieldName]?.trim() || '';
+        if (value) {
+            counts[value] = (counts[value] || 0) + 1;
+        }
+    });
+    return counts;
+}
+
 // Function to toggle the map legend visibility
 function toggleLegend() {
     const legend = document.querySelector('.map-legend');
@@ -352,6 +530,7 @@ function initializeFilters(data) {
         statusSelect.remove(1);
     }
 
+    // Populate native select elements first (they'll be hidden but still used for values)
     districts.sort().forEach(district => {
         const option = document.createElement('option');
         option.value = district;
@@ -387,7 +566,53 @@ function initializeFilters(data) {
         statusSelect.appendChild(option);
     });
 
-    // Add filter change handlers
+    // Calculate counts for each option
+    const districtCounts = countFieldValues(data, 'რაიონი');
+    const villageCounts = countFieldValues(data, 'სოფელი');
+    const priorityCounts = countFieldValues(data, 'პრიორიტეტი');
+    
+    // Special handling for status counts including empty status
+    const statusCounts = {};
+    data.forEach(item => {
+        const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
+        if (status) {
+            statusCounts[status] = (statusCounts[status] || 0) + 1;
+        } else {
+            // Count empty status
+            statusCounts["EMPTY_STATUS"] = (statusCounts["EMPTY_STATUS"] || 0) + 1;
+        }
+    });
+
+    // Create custom dropdowns
+    customDropdowns.district = createCustomDropdown(
+        'districtFilter', 
+        districts, 
+        districtCounts, 
+        'ყველა რაიონი'
+    );
+    
+    customDropdowns.village = createCustomDropdown(
+        'villageFilter', 
+        villages, 
+        villageCounts, 
+        'ყველა სოფელი'
+    );
+    
+    customDropdowns.priority = createCustomDropdown(
+        'priorityFilter', 
+        priorities, 
+        priorityCounts, 
+        'ყველა პრიორიტეტი'
+    );
+    
+    customDropdowns.status = createCustomDropdown(
+        'statusFilter', 
+        [...statuses, 'უცნობი სტატუსი'], 
+        {...statusCounts, 'უცნობი სტატუსი': statusCounts['EMPTY_STATUS'] || 0}, 
+        'ყველა სტატუსი'
+    );
+
+    // Add filter change handlers to the native selects (already connected via createCustomDropdown)
     districtSelect.addEventListener('change', applyFilters);
     villageSelect.addEventListener('change', applyFilters);
     prioritySelect.addEventListener('change', applyFilters);
