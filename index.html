@@ -524,12 +524,12 @@
             // Get a much larger radius based on zoom level
             const radius = calculatePolygonSize(map);
             
-            // Add random rotation between 0 and 360 degrees
-            const randomRotation = Math.random() * 2 * Math.PI;
+            // Use fixed rotation based on coordinates instead of random
+            const fixedRotation = Math.atan2(centerLat, centerLng);
             
             const coordinates = [];
             for (let i = 0; i < sides; i++) {
-                const angle = (i * 2 * Math.PI) / sides + randomRotation;
+                const angle = (i * 2 * Math.PI) / sides + fixedRotation;
                 const lng = centerLng + radius * Math.cos(angle);
                 const lat = centerLat + radius * Math.sin(angle);
                 coordinates.push([lng, lat]);
@@ -628,6 +628,17 @@
             document.querySelectorAll('.card').forEach(c => c.classList.remove('highlighted-card'));
             // Add highlight to selected card
             document.querySelector(`.card[data-index="${index}"]`)?.classList.add('highlighted-card');
+        }
+
+        // Add this function before createPolygonCoordinates
+        function calculatePointOffset(index, baseRadius) {
+            // Create a spiral pattern
+            const angle = index * 0.5; // Rotate each point by 0.5 radians
+            const radius = baseRadius * (1 + index * 0.2); // Increase radius for each point
+            return {
+                x: Math.cos(angle) * radius,
+                y: Math.sin(angle) * radius
+            };
         }
 
         // Initialize map after data is loaded
@@ -732,28 +743,47 @@
                 map.on('load', function() {
                     // Function to update features based on current zoom
                     function updateFeatures() {
-                        // Create features for GeoJSON source
-                        return sampleData.map((item, index) => {
-                            // Get status for color
-                            const isPending = item["სტატუსი (მომლოდინე/ დასრულებულია)"] === "მომლოდინე";
-                            
-                            // Create different polygon colors based on status
-                            const fillColor = '#e74c3c';
-                            const strokeColor = '#c0392b';
-                            
-                            return {
-                                type: 'Feature',
-                                properties: {
-                                    id: index,
-                                    ...item,
-                                    fillColor: fillColor,
-                                    strokeColor: strokeColor
-                                },
-                                geometry: {
-                                    type: 'Polygon',
-                                    coordinates: [createPolygonCoordinates(map, item.lon, item.lat)]
+                        // Group points by location
+                        const locationGroups = {};
+                        sampleData.forEach((item, index) => {
+                            if (item.lat && item.lon) {
+                                const key = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
+                                if (!locationGroups[key]) {
+                                    locationGroups[key] = [];
                                 }
-                            };
+                                locationGroups[key].push({ item, index });
+                            }
+                        });
+
+                        // Create features with offsets for overlapping points
+                        return Object.values(locationGroups).flatMap(group => {
+                            return group.map((entry, groupIndex) => {
+                                const { item, index } = entry;
+                                const baseRadius = calculatePolygonSize(map);
+                                const offset = calculatePointOffset(groupIndex, baseRadius * 0.5);
+                                
+                                // Apply offset to center coordinates
+                                const offsetLon = item.lon + offset.x;
+                                const offsetLat = item.lat + offset.y;
+                                
+                                const isPending = item["სტატუსი (მომლოდინე/ დასრულებულია)"] === "მომლოდინე";
+                                const fillColor = '#e74c3c';
+                                const strokeColor = '#c0392b';
+
+                                return {
+                                    type: 'Feature',
+                                    properties: {
+                                        id: index,
+                                        ...item,
+                                        fillColor: fillColor,
+                                        strokeColor: strokeColor
+                                    },
+                                    geometry: {
+                                        type: 'Polygon',
+                                        coordinates: [createPolygonCoordinates(map, offsetLon, offsetLat)]
+                                    }
+                                };
+                            });
                         });
                     }
                     
