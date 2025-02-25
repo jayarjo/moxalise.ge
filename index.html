@@ -189,8 +189,23 @@
         @media (max-width: 768px) {
             #sidebar {
                 display: none;
+                position: fixed;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                overflow-y: auto;
             }
             #map {
+                right: 0;
+            }
+            .mobile-sidebar-button {
+                display: block;
+            }
+            #sidebar.mobile-visible {
+                display: block;
+                z-index: 2000;
+            }
+            .tabs-panel {
                 right: 0;
             }
         }
@@ -388,10 +403,59 @@
         .tabs-close:hover {
             background: #c0392b;
         }
+
+        /* Mobile sidebar button and panel */
+        .mobile-sidebar-button {
+            display: none;
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 12px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 2001; /* Increase z-index to be above everything */
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .mobile-sidebar-button:hover {
+            background: #c0392b;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-sidebar-button {
+                display: block;
+            }
+            #sidebar {
+                display: none;
+                position: fixed;
+                left: 0;
+                width: calc(100% - 41px);
+                height: 100%;
+                overflow-y: auto;
+            }
+            #map {
+                right: 0;
+            }
+            .mobile-sidebar-button {
+                display: block;
+            }
+            #sidebar.mobile-visible {
+                display: block;
+                z-index: 2000;
+            }
+            .tabs-panel {
+                right: 0;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="map"></div>
+    <button class="mobile-sidebar-button" onclick="toggleMobileSidebar()">საჭიროებების სია</button>
     <div id="sidebar">
         <h1 class="sidebar-title">გურიის დიდთოვლობით დაზარალებული მოსახლეობის დახმარება</h1>
         <a href="https://docs.google.com/spreadsheets/d/1cWGBzYPa93_NZq8ZwtqF94fhwIdovrWkPg6-PRNaVHc/edit#gid=0" 
@@ -861,6 +925,11 @@
                 document.getElementById(button.dataset.tab).classList.add('active');
             });
         });
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('mobile-visible');
+        }
     </script>
 </body>
 </html>
