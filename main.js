@@ -9,6 +9,41 @@ let userLocationMarker = null;
 // Add global variables to track custom dropdowns
 let customDropdowns = {};
 
+// Functions for modal help request
+function openHelpModal() {
+    const modal = document.getElementById('help-modal');
+    modal.style.display = 'block';
+    
+    // Add a small delay before adding the active class for animation
+    setTimeout(() => {
+        modal.classList.add('active');
+    }, 10);
+    
+    // Prevent scrolling of the background content
+    document.body.style.overflow = 'hidden';
+}
+
+function closeHelpModal() {
+    const modal = document.getElementById('help-modal');
+    modal.classList.remove('active');
+    
+    // Add a small delay before hiding the modal completely for animation
+    setTimeout(() => {
+        modal.style.display = 'none';
+        
+        // Re-enable scrolling
+        document.body.style.overflow = '';
+    }, 300);
+}
+
+// Close modal if user clicks outside the modal content
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('help-modal');
+    if (event.target === modal) {
+        closeHelpModal();
+    }
+});
+
 // Function to create a custom dropdown with distribution data
 function createCustomDropdown(elementId, options, counts, placeholder, onChange) {
     // Get the original select element

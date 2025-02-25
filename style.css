@@ -946,3 +946,163 @@ a:hover {
         width: 50px;
     }
 }
+
+/* Help Request Button */
+.help-request-button {
+    position: fixed;
+    left: 10px;
+    top: 10px;
+    z-index: 1000;
+    background-color: #e74c3c;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.help-request-button:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal.active {
+    display: block;
+    opacity: 1;
+}
+
+.modal-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 10px;
+    width: 70%;
+    max-width: 800px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+
+.modal.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    padding: 15px 20px;
+    background-color: #e74c3c;
+    color: white;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.modal-close {
+    color: white;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #f8f9fa;
+}
+
+.modal-body {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.instruction-steps {
+    padding-left: 20px;
+}
+
+.instruction-steps li {
+    margin-bottom: 20px;
+}
+
+.instruction-steps ul {
+    margin-top: 10px;
+}
+
+.instruction-steps ul li {
+    margin-bottom: 5px;
+}
+
+.post-example {
+    background-color: #f8f9fa;
+    border-left: 4px solid #3b5998;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 5px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.modal-footer {
+    text-align: center;
+    padding: 15px 0;
+    margin-top: 20px;
+}
+
+.facebook-group-button {
+    display: inline-block;
+    background-color: #4267B2;
+    color: white;
+    padding: 12px 25px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.facebook-group-button:hover {
+    background-color: #365899;
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .help-request-button {
+        left: 10px;
+        top: 10px;
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+    
+    .modal-content {
+        width: 90%;
+        margin: 10% auto;
+    }
+    
+    .modal-header h2 {
+        font-size: 20px;
+    }
+}
