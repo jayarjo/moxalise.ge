@@ -304,6 +304,7 @@
             border: none;
         }
 
+        /* Toggle panel button styles */
         .toggle-panel {
             position: fixed;
             bottom: 20px;
@@ -324,6 +325,13 @@
         /* Adjust map height when panel is visible */
         #map.panel-visible {
             bottom: 300px;
+        }
+        
+        /* Hide toggle-panel on mobile */
+        @media (max-width: 768px) {
+            .toggle-panel {
+                display: none;
+            }
         }
 
         .sidebar-title {
@@ -734,7 +742,7 @@
 
         @media (max-width: 768px) {
             .location-button {
-                bottom: 70px;
+                bottom: 20px;
                 left: 20px;
             }
         }
