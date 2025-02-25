@@ -186,17 +186,12 @@ function createTooltipHTML(feature, instanceId) {
 
     // Get all keys except internal ones
     const keys = Object.keys(data).filter(key =>
-        !['id', 'fillColor', 'strokeColor'].includes(key)
+        !['id', 'fillColor', 'strokeColor', 'lat', 'lon'].includes(key)
     );
 
     // Process all fields
     for (const key of keys) {
         let value = data[key];
-
-        // Only special handling for coordinates (as allowed)
-        if (key === "lat" || key === "lon") {
-            value = typeof value === 'number' ? value.toFixed(4) : value;
-        }
 
         // Convert URLs to links (not making assumptions, just basic URL detection)
         if (value && typeof value === 'string' && isURL(value)) {
@@ -205,6 +200,11 @@ function createTooltipHTML(feature, instanceId) {
         // Handle null or undefined
         else if (value === null || value === undefined) {
             value = "";
+        }
+
+        // Skip empty values (null, undefined, empty string, or whitespace-only)
+        if (value === "" || (typeof value === 'string' && value.trim() === "")) {
+            continue;
         }
 
         html += `<p><span class="info-label">${key}:</span> <span class="info-value">${value}</span></p>`;
