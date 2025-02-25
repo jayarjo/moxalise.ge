@@ -1,4 +1,3 @@
-
 // Make map and markers global at the top of script section
 let map;
 let sampleData = [];
@@ -891,6 +890,15 @@ function showMyLocation() {
 function toggleSatellite() {
     const button = document.querySelector('.satellite-toggle');
     button.classList.toggle('active');
+    
+    // Close any open tooltips before changing the map style
+    if (window.tippyInstances) {
+        Object.values(window.tippyInstances).forEach(instance => {
+            if (instance && instance.hide) {
+                instance.hide();
+            }
+        });
+    }
 
     // Define the map styles
     const standardStyle = {
