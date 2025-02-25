@@ -1,0 +1,808 @@
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+#map {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+}
+
+.maplibregl-popup {
+    max-width: 300px;
+}
+
+.status-pending {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.status-completed {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.tippy-box {
+    max-width: 400px !important;
+    background-color: white;
+    color: #333;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9999 !important;
+}
+
+.tippy-content {
+    padding: 15px;
+}
+
+.info-card {
+    border-radius: 8px;
+    padding: 5px;
+    font-size: 14px;
+    position: relative;
+    z-index: 9999;
+}
+
+.info-card h3 {
+    margin-top: 5px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+    font-size: 16px;
+    color: #2c3e50;
+}
+
+.info-card p {
+    margin: 8px 0;
+    line-height: 1.4;
+}
+
+.info-label {
+    font-weight: bold;
+    color: #34495e;
+    display: inline-block;
+    min-width: 120px;
+}
+
+.info-value {
+    display: inline-block;
+}
+
+a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.polygon {
+    cursor: pointer;
+}
+
+/* Close button styles */
+.close-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+    line-height: 1;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 5px;
+    z-index: 10;
+    transition: background-color 0.2s;
+}
+
+.close-button:hover {
+    background-color: #c0392b;
+}
+
+/* Sidebar styles */
+#sidebar {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 300px;
+    background: white;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background: white;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card.pending {
+    border-left: 4px solid #e74c3c;
+    /* Red for pending */
+}
+
+.card.completed {
+    border-left: 4px solid #2ecc71;
+    /* Green for completed */
+}
+
+.card.empty-status {
+    border-left: 4px solid #95a5a6;
+    /* Gray for empty status */
+}
+
+.source-link {
+    display: block;
+    background: #3498db;
+    color: white !important;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-align: center;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+.source-link:hover {
+    background: #2980b9;
+    text-decoration: none !important;
+}
+
+.facebook-link {
+    display: block;
+    background: #4267B2;
+    color: white !important;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-align: center;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+.facebook-link:hover {
+    background: #365899;
+    text-decoration: none !important;
+}
+
+.telegram-link {
+    display: block;
+    background: #0088cc;
+    color: white !important;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-align: center;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+.telegram-link:hover {
+    background: #0077b5;
+    text-decoration: none !important;
+}
+
+.github-link {
+    display: block;
+    background: #24292e;
+    color: white !important;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-align: center;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+.github-link:hover {
+    background: #0366d6;
+    text-decoration: none !important;
+}
+
+/* GitHub icon button styles */
+.github-icon-button {
+    position: fixed;
+    bottom: 20px;
+    right: 350px;
+    width: 40px;
+    height: 40px;
+    background: #24292e;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    z-index: 1002;
+}
+
+.github-icon-button:hover {
+    background: #0366d6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+    #sidebar {
+        display: none;
+        position: fixed;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    #map {
+        right: 0;
+    }
+
+    .mobile-sidebar-button {
+        display: block;
+    }
+
+    #sidebar.mobile-visible {
+        display: block;
+        z-index: 2000;
+    }
+
+    .tabs-panel {
+        right: 0;
+    }
+}
+
+/* Collapsible card styles */
+.card {
+    cursor: pointer;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.card-content {
+    display: none;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    margin-top: 10px;
+}
+
+.card.expanded .card-content {
+    display: block;
+}
+
+.card-title {
+    margin: 0;
+    font-size: 16px;
+    color: #2c3e50;
+    line-height: 1.4;
+}
+
+.expand-icon {
+    font-size: 20px;
+    color: #7f8c8d;
+    transition: transform 0.3s;
+    margin-left: 10px;
+}
+
+.card.expanded .expand-icon {
+    transform: rotate(180deg);
+}
+
+/* Add highlighted polygon styles */
+.highlighted-card {
+    background-color: #f8d7da;
+}
+
+/* Bottom panel styles */
+#bottom-panel {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    height: 100vh;
+    background: white;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: none;
+}
+
+#bottom-panel iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Toggle panel button styles */
+.toggle-panel {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    padding: 10px 20px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+.toggle-panel:hover {
+    background: #2980b9;
+}
+
+/* Adjust map height when panel is visible */
+#map.panel-visible {
+    bottom: 300px;
+}
+
+/* Hide toggle-panel on mobile */
+@media (max-width: 768px) {
+    .toggle-panel {
+        display: none;
+    }
+}
+
+.sidebar-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+/* Tab panel styles */
+.tabs-panel {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100vh;
+    background: white;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: none;
+}
+
+.tabs-header {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 10px;
+}
+
+.tab-button {
+    padding: 12px 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #495057;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-button:hover {
+    color: #228be6;
+}
+
+.tab-button.active {
+    color: #228be6;
+    border-bottom-color: #228be6;
+}
+
+.tab-content {
+    display: none;
+    height: calc(100% - 45px);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-content iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Adjust map height when panel is visible */
+#map.panel-visible {
+    bottom: 600px;
+}
+
+.redirect-button {
+    display: block;
+    width: 80%;
+    max-width: 400px;
+    padding: 30px;
+    background: #e74c3c;
+    color: white;
+    text-align: center;
+    border: none;
+    border-radius: 8px;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.redirect-button:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.tabs-close {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.tabs-close:hover {
+    background: #c0392b;
+}
+
+/* Mobile sidebar button and panel */
+.mobile-sidebar-button {
+    display: none;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 12px 20px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 2001;
+    /* Increase z-index to be above everything */
+    font-size: 16px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-sidebar-button:hover {
+    background: #c0392b;
+}
+
+@media (max-width: 768px) {
+    .mobile-sidebar-button {
+        display: block;
+    }
+
+    #sidebar {
+        display: none;
+        position: fixed;
+        left: 0;
+        width: calc(100% - 41px);
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    #map {
+        right: 0;
+    }
+
+    .mobile-sidebar-button {
+        display: block;
+    }
+
+    #sidebar.mobile-visible {
+        display: block;
+        z-index: 2000;
+    }
+
+    .tabs-panel {
+        right: 0;
+    }
+}
+
+.map-pin {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    /* Slightly reduced height for better proportions */
+    --pin-color: #e74c3c;
+    /* Default color, will be overridden inline */
+    background-color: var(--pin-color);
+    border-radius: 50% 50% 0% 50%;
+    transform: rotate(45deg);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid white;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    z-index: 1;
+    /* Base z-index */
+    transform-origin: center bottom;
+}
+
+.map-pin:hover {
+    transform: rotate(45deg) scale(1.15);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+    /* Ensure hovered pin is above others */
+}
+
+.map-pin.highlighted {
+    border: 3px solid black;
+    z-index: 20;
+    /* Ensure highlighted pin is above all others, even hovered ones */
+    transform: rotate(45deg) scale(1.15);
+}
+
+.map-pin.highlighted:hover {
+    transform: rotate(45deg) scale(1.2);
+}
+
+.map-pin::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.map-pin-container {
+    width: 35px;
+    height: 45px;
+    /* Adjusted for proper positioning */
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    /* Align to top instead of bottom */
+    pointer-events: none;
+}
+
+.map-pin-shadow {
+    position: absolute;
+    width: 16px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.25);
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-45deg);
+    filter: blur(2px);
+}
+
+.filters {
+    margin: 10px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Map legend styles */
+.map-legend {
+    position: absolute;
+    bottom: 80px;
+    left: 10px;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    font-size: 14px;
+    max-width: 220px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.map-legend.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px);
+}
+
+.legend-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.legend-close {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.legend-close:hover {
+    background-color: #c0392b;
+}
+
+.legend-toggle {
+    position: absolute;
+    bottom: 30px;
+    left: 10px;
+    background: white;
+    color: #333;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    font-size: 13px;
+    z-index: 99;
+    display: none;
+}
+
+.legend-toggle:hover {
+    background-color: #f5f5f5;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    border-radius: 3px;
+}
+
+.legend-pin {
+    position: relative;
+    width: 14px;
+    height: 14px;
+    margin-right: 8px;
+    border-radius: 50% 50% 0% 50%;
+    transform: rotate(45deg);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    border: 1px solid white;
+}
+
+.legend-polygon {
+    width: 16px;
+    height: 14px;
+    margin-right: 8px;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+@media (max-width: 768px) {
+    .map-legend {
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: 90%;
+    }
+}
+
+/* Add custom CSS styles for the location button and user location marker */
+.location-button {
+    position: fixed;
+    bottom: 20px;
+    left: 210px; /* Position it next to the "მონაცემების პანელი" button */
+    padding: 10px 20px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+.location-button:hover {
+    background: #2980b9;
+}
+
+/* Add styles for the satellite toggle button */
+.satellite-toggle {
+    position: fixed;
+    bottom: 20px;
+    left: 350px; /* Position it next to the location button */
+    padding: 10px 20px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+.satellite-toggle:hover {
+    background: #2980b9;
+}
+
+.satellite-toggle.active {
+    background: #2c3e50;
+}
+
+.user-location-marker {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: rgba(52, 152, 219, 0.6);
+    border: 3px solid rgba(41, 128, 185, 1);
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.4);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.6);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(52, 152, 219, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(52, 152, 219, 0);
+    }
+}
+
+@media (max-width: 768px) {
+    .location-button {
+        bottom: 20px;
+        left: 20px;
+    }
+    
+    .satellite-toggle {
+        bottom: 20px;
+        left: 145px; /* Position it next to the location button on mobile */
+    }
+}
