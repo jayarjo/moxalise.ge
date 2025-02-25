@@ -459,12 +459,62 @@
         }
 
         .map-pin {
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            width: 28px;
+            height: 28px; /* Slightly reduced height for better proportions */
+            --pin-color: #e74c3c; /* Default color, will be overridden inline */
+            background-color: var(--pin-color);
+            border-radius: 50% 50% 0% 50%;
+            transform: rotate(45deg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
             cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid white;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            z-index: 1; /* Base z-index */
+            transform-origin: center bottom;
+        }
+        
+        .map-pin:hover {
+            transform: rotate(45deg) scale(1.15);
+            box-shadow: 0 6px 10px rgba(0,0,0,0.4);
+            z-index: 10; /* Ensure hovered pin is above others */
+        }
+        
+        .map-pin::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .map-pin-container {
+            width: 35px;
+            height: 45px; /* Adjusted for proper positioning */
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top instead of bottom */
+            pointer-events: none;
+        }
+        
+        .map-pin-shadow {
+            position: absolute;
+            width: 16px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: rgba(0,0,0,0.25);
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-45deg);
+            filter: blur(2px);
         }
 
         .filters {
@@ -977,27 +1027,44 @@
                                 color = '#95a5a6';  // Gray
                             }
 
+                            // Create container element first
+                            const container = document.createElement('div');
+                            container.className = 'map-pin-container';
+                            
+                            // Create pin element
                             const el = document.createElement('div');
                             el.className = 'map-pin';
-                            el.style.backgroundColor = color;
-                            el.style.cursor = 'pointer'; // Add cursor style
+                            el.style.setProperty('--pin-color', color); // Use CSS variable for color
+                            el.style.pointerEvents = 'auto'; // Make sure pin receives events
+                            
+                            container.appendChild(el);
+                            
+                            // Add shadow element to the pin
+                            const shadowEl = document.createElement('div');
+                            shadowEl.className = 'map-pin-shadow';
+                            el.appendChild(shadowEl);
                             
                             const marker = new maplibregl.Marker({
-                                element: el,
-                                anchor: 'center'
+                                element: container,
+                                anchor: 'bottom',
+                                offset: [0, 0] // No offset needed with our new design
                             }).setLngLat([item.lon, item.lat])
                               .addTo(map);
                             
-                            // Add direct click handler to the marker
-                            marker.getElement().onclick = function(e) {
+                            // Add direct click handler to the pin (not the container)
+                            el.onclick = function(e) {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 
                                 highlightPolygon(map, index);
                                 
-                                const rect = this.getBoundingClientRect();
-                                const clickX = rect.left + rect.width/2;
-                                const clickY = rect.top;
+                                // Get the container's position first
+                                const containerRect = this.parentNode.getBoundingClientRect();
+                                const pinRect = this.getBoundingClientRect();
+                                
+                                // Position tooltip above the rotated pin
+                                const clickX = containerRect.left + (containerRect.width / 2);
+                                const clickY = containerRect.top - 20; // Adjust for the 45-degree rotated pin
                                 
                                 // Create feature-like structure for tooltip
                                 const feature = {
@@ -1065,7 +1132,8 @@
                                 
                                 window.tippyInstances[index].show();
                             };
-                                
+                            
+                            // Store marker with its metadata for filtering
                             markers.push({
                                 marker,
                                 id: index,
@@ -1199,9 +1267,10 @@
                             const feature = e.features[0];
                             const id = feature.properties.id;
                             highlightPolygon(map, id);
-                            // Get click position
+                            
+                            // Get click position - adjust to match similar positioning as the pins
                             const clickX = e.point.x;
-                            const clickY = e.point.y;
+                            const clickY = e.point.y - 15; // Position higher to match pin tooltip placement
                             
                             // Create tooltip content with the ID for close button reference
                             const tooltipContent = document.createElement('div');
@@ -1227,9 +1296,6 @@
                             Object.values(window.tippyInstances || {}).forEach(instance => {
                                 if (instance && instance.hide) {
                                     instance.hide();
-                                    if (instance.destroy) {
-                                        instance.destroy();
-                                    }
                                 }
                             });
                             
