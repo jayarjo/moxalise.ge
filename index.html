@@ -171,6 +171,22 @@
             text-decoration: none !important;
         }
 
+        .facebook-link {
+            display: block;
+            background: #4267B2;
+            color: white !important;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .facebook-link:hover {
+            background: #365899;
+            text-decoration: none !important;
+        }
+
         @media (max-width: 768px) {
             #sidebar {
                 display: none;
@@ -276,9 +292,14 @@
            class="source-link">
             მონაცემთა წყარო
         </a>
+        <a href="https://www.facebook.com/groups/634781109242732" 
+           target="_blank" 
+           class="facebook-link">
+            Facebook ჯგუფი
+        </a>
         <div id="cards-container"></div>
     </div>
-    <button class="toggle-panel" onclick="togglePanel()">Toggle Spreadsheet</button>
+    <button class="toggle-panel" onclick="togglePanel()">მონაცემების პანელი</button>
     <div id="bottom-panel">
         <iframe src="https://docs.google.com/spreadsheets/d/1cWGBzYPa93_NZq8ZwtqF94fhwIdovrWkPg6-PRNaVHc/edit?usp=sharing" allow="autoplay"></iframe>
     </div>
@@ -434,6 +455,17 @@
                     lon: d.lon ? +d.lon : null   // Convert to number if exists
                 }));
 
+                // Calculate bounds of all points
+                const bounds = sampleData.reduce((bounds, item) => {
+                    if (item.lat && item.lon) {
+                        bounds.north = Math.max(bounds.north, item.lat);
+                        bounds.south = Math.min(bounds.south, item.lat);
+                        bounds.east = Math.max(bounds.east, item.lon);
+                        bounds.west = Math.min(bounds.west, item.lon);
+                    }
+                    return bounds;
+                }, { north: -90, south: 90, east: -180, west: 180 });
+
                 // Populate sidebar cards
                 const cardsContainer = document.getElementById('cards-container');
                 sampleData.forEach((item, index) => {
@@ -511,8 +543,13 @@
                             maxzoom: 19
                         }]
                     },
-                    center: [43.5, 42.0], // Center of Georgia
-                    zoom: 7
+                    bounds: [
+                        [bounds.west - 0.1, bounds.south - 0.1], // Add padding to bounds
+                        [bounds.east + 0.1, bounds.north + 0.1]
+                    ],
+                    fitBoundsOptions: {
+                        padding: 50
+                    }
                 });
 
                 // Wait for the map to load
