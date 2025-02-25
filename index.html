@@ -630,6 +630,9 @@
             <select class="filter-select" id="villageFilter">
                 <option value="">ყველა სოფელი</option>
             </select>
+            <select class="filter-select" id="priorityFilter">
+                <option value="">ყველა პრიორიტეტი</option>
+            </select>
         </div>
         <a href="https://docs.google.com/spreadsheets/d/1cWGBzYPa93_NZq8ZwtqF94fhwIdovrWkPg6-PRNaVHc/edit#gid=0" 
            target="_blank" 
@@ -856,9 +859,11 @@
             // Trim whitespace and filter out empty values
             const districts = [...new Set(data.map(item => item['რაიონი']?.trim()).filter(Boolean))];
             const villages = [...new Set(data.map(item => item['სოფელი']?.trim()).filter(Boolean))];
+            const priorities = [...new Set(data.map(item => item['პრიორიტეტი']?.trim()).filter(Boolean))];
             
             const districtSelect = document.getElementById('districtFilter');
             const villageSelect = document.getElementById('villageFilter');
+            const prioritySelect = document.getElementById('priorityFilter');
             
             // Clear existing options (except the first one)
             while (districtSelect.options.length > 1) {
@@ -867,6 +872,10 @@
             
             while (villageSelect.options.length > 1) {
                 villageSelect.remove(1);
+            }
+            
+            while (prioritySelect.options.length > 1) {
+                prioritySelect.remove(1);
             }
             
             districts.sort().forEach(district => {
@@ -883,9 +892,17 @@
                 villageSelect.appendChild(option);
             });
             
+            priorities.sort().forEach(priority => {
+                const option = document.createElement('option');
+                option.value = priority;
+                option.textContent = priority;
+                prioritySelect.appendChild(option);
+            });
+            
             // Add filter change handlers
             districtSelect.addEventListener('change', applyFilters);
             villageSelect.addEventListener('change', applyFilters);
+            prioritySelect.addEventListener('change', applyFilters);
         }
 
         // Update applyFilters function with fixed filtering logic
@@ -894,6 +911,7 @@
             
             const selectedDistrict = document.getElementById('districtFilter').value;
             const selectedVillage = document.getElementById('villageFilter').value;
+            const selectedPriority = document.getElementById('priorityFilter').value;
             
             // Filter cards
             document.querySelectorAll('.card').forEach(card => {
@@ -903,11 +921,13 @@
                 // Trim values before comparison
                 const itemDistrict = item['რაიონი']?.trim() || '';
                 const itemVillage = item['სოფელი']?.trim() || '';
+                const itemPriority = item['პრიორიტეტი']?.trim() || '';
                 
                 const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
                 const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
+                const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
                 
-                card.style.display = (matchesDistrict && matchesVillage) ? 'block' : 'none';
+                card.style.display = (matchesDistrict && matchesVillage && matchesPriority) ? 'block' : 'none';
             });
 
             // Update markers visibility
@@ -915,11 +935,13 @@
                 // Trim values before comparison
                 const propertyDistrict = properties['რაიონი']?.trim() || '';
                 const propertyVillage = properties['სოფელი']?.trim() || '';
+                const propertyPriority = properties['პრიორიტეტი']?.trim() || '';
                 
                 const matchesDistrict = !selectedDistrict || propertyDistrict === selectedDistrict;
                 const matchesVillage = !selectedVillage || propertyVillage === selectedVillage;
+                const matchesPriority = !selectedPriority || propertyPriority === selectedPriority;
                 
-                marker.getElement().style.display = (matchesDistrict && matchesVillage) ? 'block' : 'none';
+                marker.getElement().style.display = (matchesDistrict && matchesVillage && matchesPriority) ? 'block' : 'none';
             });
 
             // Update polygon features
@@ -929,11 +951,13 @@
                     // Trim values before comparison
                     const itemDistrict = item['რაიონი']?.trim() || '';
                     const itemVillage = item['სოფელი']?.trim() || '';
+                    const itemPriority = item['პრიორიტეტი']?.trim() || '';
                     
                     const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
                     const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
+                    const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
                     
-                    if (matchesDistrict && matchesVillage) {
+                    if (matchesDistrict && matchesVillage && matchesPriority) {
                         let color;
                         const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
                         
@@ -1235,14 +1259,21 @@
                         const locationGroups = {};
                         const selectedDistrict = document.getElementById('districtFilter').value;
                         const selectedVillage = document.getElementById('villageFilter').value;
+                        const selectedPriority = document.getElementById('priorityFilter').value;
                         
                         sampleData.forEach((item, index) => {
                             if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
                                 // Apply filters
                                 if (filtered) {
-                                    const matchesDistrict = !selectedDistrict || item['რაიონი']?.trim() === selectedDistrict;
-                                    const matchesVillage = !selectedVillage || item['სოფელი']?.trim() === selectedVillage;
-                                    if (!matchesDistrict || !matchesVillage) return;
+                                    const itemDistrict = item['რაიონი']?.trim() || '';
+                                    const itemVillage = item['სოფელი']?.trim() || '';
+                                    const itemPriority = item['პრიორიტეტი']?.trim() || '';
+                                    
+                                    const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
+                                    const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
+                                    const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
+                                    
+                                    if (!matchesDistrict || !matchesVillage || !matchesPriority) return;
                                 }
                                 
                                 let color;
