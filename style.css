@@ -78,6 +78,18 @@ body {
     display: inline-block;
 }
 
+.directions-link {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.directions-link a {
+    font-weight: 800;
+    font-size: 15px;
+    display: inline-block;
+    padding: 2px 0;
+}
+
 a {
     color: #3498db;
     text-decoration: none;

@@ -210,6 +210,12 @@ function createTooltipHTML(feature, instanceId) {
         html += `<p><span class="info-label">${key}:</span> <span class="info-value">${value}</span></p>`;
     }
 
+    // Add directions link if lat and lon are available
+    if (data.lat && data.lon) {
+        const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${data.lat},${data.lon}`;
+        html += `<p class="directions-link"><a href="${directionsUrl}" style='font-size: 18px;' target="_blank">მიმართულება / direction</a></p>`;
+    }
+
     html += `</div>`;
     return html;
 }
