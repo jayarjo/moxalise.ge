@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,40 +12,45 @@
     <script src="https://unpkg.com/tippy.js@6.3.7/dist/tippy-bundle.umd.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/tippy.js@6.3.7/dist/tippy.css" />
     <link rel="stylesheet" href="https://unpkg.com/tippy.js@6.3.7/themes/light.css" />
-  
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-RGB500YVSX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
 
-  gtag('config', 'G-RGB500YVSX');
-</script>
-  
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RGB500YVSX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-RGB500YVSX');
+    </script>
+
     <style>
         body {
             margin: 0;
             padding: 0;
             font-family: Arial, sans-serif;
         }
+
         #map {
             position: absolute;
             top: 0;
             bottom: 0;
             width: 100%;
         }
+
         .maplibregl-popup {
             max-width: 300px;
         }
+
         .status-pending {
             color: #e74c3c;
             font-weight: bold;
         }
+
         .status-completed {
             color: #e74c3c;
             font-weight: bold;
         }
+
         .tippy-box {
             max-width: 400px !important;
             background-color: white;
@@ -53,9 +59,11 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             z-index: 9999 !important;
         }
+
         .tippy-content {
             padding: 15px;
         }
+
         .info-card {
             border-radius: 8px;
             padding: 5px;
@@ -63,6 +71,7 @@
             position: relative;
             z-index: 9999;
         }
+
         .info-card h3 {
             margin-top: 5px;
             margin-bottom: 10px;
@@ -71,29 +80,36 @@
             font-size: 16px;
             color: #2c3e50;
         }
+
         .info-card p {
             margin: 8px 0;
             line-height: 1.4;
         }
+
         .info-label {
             font-weight: bold;
             color: #34495e;
             display: inline-block;
             min-width: 120px;
         }
+
         .info-value {
             display: inline-block;
         }
+
         a {
             color: #3498db;
             text-decoration: none;
         }
+
         a:hover {
             text-decoration: underline;
         }
+
         .polygon {
             cursor: pointer;
         }
+
         /* Close button styles */
         .close-button {
             position: absolute;
@@ -116,6 +132,7 @@
             z-index: 10;
             transition: background-color 0.2s;
         }
+
         .close-button:hover {
             background-color: #c0392b;
         }
@@ -128,7 +145,7 @@
             bottom: 0;
             width: 300px;
             background: white;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
             overflow-y: auto;
             z-index: 1000;
             padding: 20px;
@@ -145,19 +162,22 @@
 
         .card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .card.pending {
-            border-left: 4px solid #e74c3c; /* Red for pending */
+            border-left: 4px solid #e74c3c;
+            /* Red for pending */
         }
 
         .card.completed {
-            border-left: 4px solid #2ecc71; /* Green for completed */
+            border-left: 4px solid #2ecc71;
+            /* Green for completed */
         }
 
         .card.empty-status {
-            border-left: 4px solid #95a5a6; /* Gray for empty status */
+            border-left: 4px solid #95a5a6;
+            /* Gray for empty status */
         }
 
         .source-link {
@@ -201,16 +221,20 @@
                 height: 100%;
                 overflow-y: auto;
             }
+
             #map {
                 right: 0;
             }
+
             .mobile-sidebar-button {
                 display: block;
             }
+
             #sidebar.mobile-visible {
                 display: block;
                 z-index: 2000;
             }
+
             .tabs-panel {
                 right: 0;
             }
@@ -269,7 +293,7 @@
             bottom: 0;
             height: 100vh;
             background: white;
-            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
             z-index: 1000;
             display: none;
         }
@@ -319,7 +343,7 @@
             width: 100%;
             height: 100vh;
             background: white;
-            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
             z-index: 1000;
             display: none;
         }
@@ -392,7 +416,7 @@
         .redirect-button:hover {
             background: #c0392b;
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .tabs-close {
@@ -422,9 +446,10 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            z-index: 2001; /* Increase z-index to be above everything */
+            z-index: 2001;
+            /* Increase z-index to be above everything */
             font-size: 16px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         .mobile-sidebar-button:hover {
@@ -435,6 +460,7 @@
             .mobile-sidebar-button {
                 display: block;
             }
+
             #sidebar {
                 display: none;
                 position: fixed;
@@ -443,16 +469,20 @@
                 height: 100%;
                 overflow-y: auto;
             }
+
             #map {
                 right: 0;
             }
+
             .mobile-sidebar-button {
                 display: block;
             }
+
             #sidebar.mobile-visible {
                 display: block;
                 z-index: 2000;
             }
+
             .tabs-panel {
                 right: 0;
             }
@@ -461,38 +491,43 @@
         .map-pin {
             position: relative;
             width: 28px;
-            height: 28px; /* Slightly reduced height for better proportions */
-            --pin-color: #e74c3c; /* Default color, will be overridden inline */
+            height: 28px;
+            /* Slightly reduced height for better proportions */
+            --pin-color: #e74c3c;
+            /* Default color, will be overridden inline */
             background-color: var(--pin-color);
             border-radius: 50% 50% 0% 50%;
             transform: rotate(45deg);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
             border: 2px solid white;
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            z-index: 1; /* Base z-index */
+            z-index: 1;
+            /* Base z-index */
             transform-origin: center bottom;
         }
-        
+
         .map-pin:hover {
             transform: rotate(45deg) scale(1.15);
-            box-shadow: 0 6px 10px rgba(0,0,0,0.4);
-            z-index: 10; /* Ensure hovered pin is above others */
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+            z-index: 10;
+            /* Ensure hovered pin is above others */
         }
-        
+
         .map-pin.highlighted {
             border: 3px solid black;
-            z-index: 20; /* Ensure highlighted pin is above all others, even hovered ones */
+            z-index: 20;
+            /* Ensure highlighted pin is above all others, even hovered ones */
             transform: rotate(45deg) scale(1.15);
         }
-        
+
         .map-pin.highlighted:hover {
             transform: rotate(45deg) scale(1.2);
         }
-        
+
         .map-pin::after {
             content: '';
             position: absolute;
@@ -504,23 +539,25 @@
             left: 50%;
             transform: translate(-50%, -50%);
         }
-        
+
         .map-pin-container {
             width: 35px;
-            height: 45px; /* Adjusted for proper positioning */
+            height: 45px;
+            /* Adjusted for proper positioning */
             position: absolute;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Align to top instead of bottom */
+            align-items: flex-start;
+            /* Align to top instead of bottom */
             pointer-events: none;
         }
-        
+
         .map-pin-shadow {
             position: absolute;
             width: 16px;
             height: 4px;
             border-radius: 50%;
-            background-color: rgba(0,0,0,0.25);
+            background-color: rgba(0, 0, 0, 0.25);
             bottom: -6px;
             left: 50%;
             transform: translateX(-50%) rotate(-45deg);
@@ -533,7 +570,7 @@
             background: #f8f9fa;
             border-radius: 5px;
         }
-        
+
         .filter-select {
             width: 100%;
             padding: 8px;
@@ -551,7 +588,7 @@
             background: white;
             padding: 10px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
             z-index: 100;
             font-size: 14px;
             max-width: 220px;
@@ -604,7 +641,7 @@
             border: none;
             padding: 8px 12px;
             border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
             cursor: pointer;
             font-size: 13px;
             z-index: 99;
@@ -635,7 +672,7 @@
             margin-right: 8px;
             border-radius: 50% 50% 0% 50%;
             transform: rotate(45deg);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
             border: 1px solid white;
         }
 
@@ -656,6 +693,7 @@
         }
     </style>
 </head>
+
 <body>
     <div id="map"></div>
     <button class="mobile-sidebar-button" onclick="toggleMobileSidebar()">საჭიროებების სია</button>
@@ -698,14 +736,11 @@
                 <option value="">ყველა პრიორიტეტი</option>
             </select>
         </div>
-        <a href="https://docs.google.com/spreadsheets/d/1cWGBzYPa93_NZq8ZwtqF94fhwIdovrWkPg6-PRNaVHc/edit#gid=0" 
-           target="_blank" 
-           class="source-link">
+        <a href="https://docs.google.com/spreadsheets/d/1cWGBzYPa93_NZq8ZwtqF94fhwIdovrWkPg6-PRNaVHc/edit#gid=0"
+            target="_blank" class="source-link">
             მონაცემთა წყარო
         </a>
-        <a href="https://www.facebook.com/groups/634781109242732" 
-           target="_blank" 
-           class="facebook-link">
+        <a href="https://www.facebook.com/groups/634781109242732" target="_blank" class="facebook-link">
             Facebook ჯგუფი
         </a>
         <div id="cards-container"></div>
@@ -719,7 +754,9 @@
             <button class="tabs-close" onclick="toggleTabs()">დახურვა</button>
         </div>
         <div class="tab-content active" id="spreadsheet">
-            <iframe src="https://docs.google.com/spreadsheets/d/1cWGBzYPa93_NZq8ZwtqF94fhwIdovrWkPg6-PRNaVHc/edit?usp=sharing" allow="autoplay"></iframe>
+            <iframe
+                src="https://docs.google.com/spreadsheets/d/1cWGBzYPa93_NZq8ZwtqF94fhwIdovrWkPg6-PRNaVHc/edit?usp=sharing"
+                allow="autoplay"></iframe>
         </div>
     </div>
 
@@ -733,16 +770,16 @@
         function toggleLegend() {
             const legend = document.querySelector('.map-legend');
             const toggleButton = document.querySelector('.legend-toggle');
-            
+
             legend.classList.toggle('hidden');
-            
+
             // Show/hide the toggle button based on legend visibility
             if (legend.classList.contains('hidden')) {
                 toggleButton.style.display = 'none';
-            } 
-            
+            }
+
         }
-        
+
 
 
         // Add this function before other scripts
@@ -750,10 +787,10 @@
             const panel = document.getElementById('bottom-panel');
             const map = document.getElementById('map');
             const isHidden = panel.style.display === 'none' || !panel.style.display;
-            
+
             panel.style.display = isHidden ? 'block' : 'none';
             map.classList.toggle('panel-visible');
-            
+
             // Trigger map resize to ensure proper rendering
             if (window.map) {
                 window.map.resize();
@@ -764,30 +801,30 @@
         function calculatePolygonSize(map) {
             // Get the current zoom level
             const zoom = map.getZoom();
-            
+
             // Base size reduced by half for zoom out view
             const baseSize = 0.25; // Half of previous value (0.5)
-            
+
             // Steeper reduction rate for zoomed in view
             const zoomFactor = Math.pow(0.5, zoom - 5);
-            
+
             // Minimum size is 1/10 of previous minimum
             const minSize = 0.005; // 1/10 of previous value (0.05)
             // Maximum size is half of previous maximum
             const maxSize = 0.4;   // Half of previous value (0.8)
-            
+
             // Calculate size based on zoom level with constraints
             return Math.min(maxSize, Math.max(minSize, baseSize * zoomFactor));
         }
-        
+
         // Function to create polygon coordinates around a center point
         function createPolygonCoordinates(map, centerLng, centerLat, sides = 6, sizeMultiplier = 1) {
             // Get a much larger radius based on zoom level
             const radius = calculatePolygonSize(map) * sizeMultiplier;
-            
+
             // Use fixed rotation based on coordinates instead of random
             const fixedRotation = Math.atan2(centerLat, centerLng);
-            
+
             const coordinates = [];
             for (let i = 0; i < sides; i++) {
                 const angle = (i * 2 * Math.PI) / sides + fixedRotation;
@@ -802,43 +839,43 @@
 
         // Function to detect if a string is a URL
         function isURL(str) {
-            if(str.includes('https://')) return true;
-            
+            if (str.includes('https://')) return true;
+
             if (!str || typeof str !== 'string') return false;
             str = str.trim();
             // Simple regex to match common URL patterns
             const urlPattern = /^(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
             return urlPattern.test(str);
         }
-        
+
         // Function to format values, converting URLs to links
         function formatValue(value) {
             if (!value) return '-';
             return isURL(value) ? `<a href="${value}" target="_blank">${value}</a>` : value;
         }
-        
+
         // Create HTML content for the tooltip without making assumptions about data
         function createTooltipHTML(feature, instanceId) {
             const data = feature.properties;
-            
+
             // Create wrapper with a close button
             let html = `<div class="info-card">
                 <button class="close-button" onclick="closeTooltip(${instanceId})">✕</button>`;
-            
+
             // Get all keys except internal ones
-            const keys = Object.keys(data).filter(key => 
+            const keys = Object.keys(data).filter(key =>
                 !['id', 'fillColor', 'strokeColor'].includes(key)
             );
-            
+
             // Process all fields
             for (const key of keys) {
                 let value = data[key];
-                
+
                 // Only special handling for coordinates (as allowed)
                 if (key === "lat" || key === "lon") {
                     value = typeof value === 'number' ? value.toFixed(4) : value;
                 }
-                
+
                 // Convert URLs to links (not making assumptions, just basic URL detection)
                 if (value && typeof value === 'string' && isURL(value)) {
                     value = `<a href="${value}" target="_blank">${value}</a>`;
@@ -847,10 +884,10 @@
                 else if (value === null || value === undefined) {
                     value = "";
                 }
-                
+
                 html += `<p><span class="info-label">${key}:</span> <span class="info-value">${value}</span></p>`;
             }
-            
+
             html += `</div>`;
             return html;
         }
@@ -904,7 +941,7 @@
 
             // Remove highlight from all cards
             document.querySelectorAll('.card').forEach(c => c.classList.remove('highlighted-card'));
-            
+
             // Add highlight to selected card
             document.querySelector(`.card[data-index="${index}"]`)?.classList.add('highlighted-card');
         }
@@ -913,37 +950,37 @@
         function calculatePointOffset(index, baseRadius) {
             // Create a honeycomb pattern for hexagons
             // In a honeycomb, each hexagon can have up to 6 neighbors
-            
+
             // Make hexagons 30% smaller when they're part of a group
             const scaledRadius = baseRadius * 0.7; // 30% smaller
-            
+
             if (index === 0) {
                 // First item is centered
                 return { x: 0, y: 0 };
             }
-            
+
             // Determine ring and position in ring using hexagonal grid coordinates
             // First ring starts at index 1 and has 6 positions
             // Second ring starts at index 7 and has 12 positions, etc.
             let ring = 1;
             let remainingIndex = index - 1;
-            
+
             // Find which ring this index belongs to
             while (remainingIndex >= 6 * ring) {
                 remainingIndex -= 6 * ring;
                 ring++;
             }
-            
+
             // Position within the current ring
             const positionInRing = remainingIndex;
-            
+
             // Angle within the ring (60 degree segments)
             const angle = (positionInRing * Math.PI / 3) + Math.PI / 6; // 60 degrees per segment, offset 30 degrees
-            
+
             // Distance from center increases with ring number
             // Use 1.5 * scaledRadius for optimal hexagon packing (this is the key for perfect tiling)
             const distance = ring * 1.5 * scaledRadius;
-            
+
             return {
                 x: Math.cos(angle) * distance,
                 y: Math.sin(angle) * distance
@@ -956,45 +993,45 @@
             const districts = [...new Set(data.map(item => item['რაიონი']?.trim()).filter(Boolean))];
             const villages = [...new Set(data.map(item => item['სოფელი']?.trim()).filter(Boolean))];
             const priorities = [...new Set(data.map(item => item['პრიორიტეტი']?.trim()).filter(Boolean))];
-            
+
             const districtSelect = document.getElementById('districtFilter');
             const villageSelect = document.getElementById('villageFilter');
             const prioritySelect = document.getElementById('priorityFilter');
-            
+
             // Clear existing options (except the first one)
             while (districtSelect.options.length > 1) {
                 districtSelect.remove(1);
             }
-            
+
             while (villageSelect.options.length > 1) {
                 villageSelect.remove(1);
             }
-            
+
             while (prioritySelect.options.length > 1) {
                 prioritySelect.remove(1);
             }
-            
+
             districts.sort().forEach(district => {
                 const option = document.createElement('option');
                 option.value = district;
                 option.textContent = district;
                 districtSelect.appendChild(option);
             });
-            
+
             villages.sort().forEach(village => {
                 const option = document.createElement('option');
                 option.value = village;
                 option.textContent = village;
                 villageSelect.appendChild(option);
             });
-            
+
             priorities.sort().forEach(priority => {
                 const option = document.createElement('option');
                 option.value = priority;
                 option.textContent = priority;
                 prioritySelect.appendChild(option);
             });
-            
+
             // Add filter change handlers
             districtSelect.addEventListener('change', applyFilters);
             villageSelect.addEventListener('change', applyFilters);
@@ -1004,39 +1041,39 @@
         // Update applyFilters function with fixed filtering logic
         function applyFilters() {
             if (!sampleData.length || !map) return;
-            
+
             const selectedDistrict = document.getElementById('districtFilter').value;
             const selectedVillage = document.getElementById('villageFilter').value;
             const selectedPriority = document.getElementById('priorityFilter').value;
-            
+
             // Filter cards
             document.querySelectorAll('.card').forEach(card => {
                 const index = card.getAttribute('data-index');
                 const item = sampleData[index];
-                
+
                 // Trim values before comparison
                 const itemDistrict = item['რაიონი']?.trim() || '';
                 const itemVillage = item['სოფელი']?.trim() || '';
                 const itemPriority = item['პრიორიტეტი']?.trim() || '';
-                
+
                 const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
                 const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
                 const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
-                
+
                 card.style.display = (matchesDistrict && matchesVillage && matchesPriority) ? 'block' : 'none';
             });
 
             // Update markers visibility
-            locationMarkers.forEach(({marker, properties}) => {
+            locationMarkers.forEach(({ marker, properties }) => {
                 // Trim values before comparison
                 const propertyDistrict = properties['რაიონი']?.trim() || '';
                 const propertyVillage = properties['სოფელი']?.trim() || '';
                 const propertyPriority = properties['პრიორიტეტი']?.trim() || '';
-                
+
                 const matchesDistrict = !selectedDistrict || propertyDistrict === selectedDistrict;
                 const matchesVillage = !selectedVillage || propertyVillage === selectedVillage;
                 const matchesPriority = !selectedPriority || propertyPriority === selectedPriority;
-                
+
                 marker.getElement().style.display = (matchesDistrict && matchesVillage && matchesPriority) ? 'block' : 'none';
             });
 
@@ -1048,15 +1085,15 @@
                     const itemDistrict = item['რაიონი']?.trim() || '';
                     const itemVillage = item['სოფელი']?.trim() || '';
                     const itemPriority = item['პრიორიტეტი']?.trim() || '';
-                    
+
                     const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
                     const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
                     const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
-                    
+
                     if (matchesDistrict && matchesVillage && matchesPriority) {
                         let color;
                         const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
-                        
+
                         if (status === "მომლოდინე") {
                             color = '#e74c3c';
                         } else if (status === "აღმოუჩინეს დახმარება") {
@@ -1091,12 +1128,12 @@
 
         // Initialize map after data is loaded
         d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyIwzLFtS2150qbKVVti1uVfgDhwID3Ec6NLRrvX4AlABpxneejy1-lgTF/pub?gid=0&single=true&output=csv")
-            .then(function(data) {
+            .then(function (data) {
                 // Store data globally with trimmed string values
                 sampleData = data.map(d => {
                     // Create a new object with all string values trimmed
                     const trimmedObj = {};
-                    
+
                     // Process each field: trim strings, convert numbers
                     Object.keys(d).forEach(key => {
                         if (typeof d[key] === 'string') {
@@ -1105,7 +1142,7 @@
                             trimmedObj[key] = d[key];
                         }
                     });
-                    
+
                     // Add lat/lon as numbers
                     return {
                         ...trimmedObj,
@@ -1130,7 +1167,7 @@
                 sampleData.forEach((item, index) => {
                     const card = document.createElement('div');
                     card.setAttribute('data-index', index);
-                    
+
                     // Determine status class
                     let statusClass = 'empty-status';
                     const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
@@ -1139,20 +1176,20 @@
                     } else if (status === "აღმოუჩინეს დახმარება") {
                         statusClass = 'completed';
                     }
-                    
+
                     card.className = `card ${statusClass}`;
 
                     const needsTitle = item[`საჭიროება(ები)
 (საკვები, მედიკამენტები, ევაკუაცია, ექიმი, საწვავი, დათოლვა, სხვა)    `];
 
                     // Get first item's keys to determine structure
-                    const keys = Object.keys(item).filter(key => 
+                    const keys = Object.keys(item).filter(key =>
                         !['id', 'fillColor', 'strokeColor', 'lat', 'lon'].includes(key)
                     );
 
                     let cardContent = `
                         <div class="card-header">
-                            <h3 class="card-title">${needsTitle||[keys[0]] || ''}</h3>
+                            <h3 class="card-title">${needsTitle || [keys[0]] || ''}</h3>
                             <span class="expand-icon">▼</span>
                         </div>
                         <div class="card-content">
@@ -1215,14 +1252,14 @@
                 });
 
                 // Wait for the map to load
-                map.on('load', function() {
+                map.on('load', function () {
                     // Create markers first and only once
                     const markers = [];
                     sampleData.forEach((item, index) => {
                         if (item.lat && item.lon && item["ზუსტი ადგილმდებარეობა"]?.trim()) {
                             let color;
                             const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
-                            
+
                             if (status === "მომლოდინე") {
                                 color = '#e74c3c';  // Red
                             } else if (status === "აღმოუჩინეს დახმარება") {
@@ -1234,50 +1271,50 @@
                             // Create container element first
                             const container = document.createElement('div');
                             container.className = 'map-pin-container';
-                            
+
                             // Create pin element
                             const el = document.createElement('div');
                             el.className = 'map-pin';
                             el.style.setProperty('--pin-color', color); // Use CSS variable for color
                             el.style.pointerEvents = 'auto'; // Make sure pin receives events
-                            
+
                             container.appendChild(el);
-                            
+
                             // Add shadow element to the pin
                             const shadowEl = document.createElement('div');
                             shadowEl.className = 'map-pin-shadow';
                             el.appendChild(shadowEl);
-                            
+
                             const marker = new maplibregl.Marker({
                                 element: container,
                                 anchor: 'bottom',
                                 offset: [0, 0] // No offset needed with our new design
                             }).setLngLat([item.lon, item.lat])
-                              .addTo(map);
-                            
+                                .addTo(map);
+
                             // Add direct click handler to the pin (not the container)
-                            el.onclick = function(e) {
+                            el.onclick = function (e) {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                
+
                                 highlightPolygon(map, index);
-                                
+
                                 // Get the container's position first
                                 const containerRect = this.parentNode.getBoundingClientRect();
                                 const pinRect = this.getBoundingClientRect();
-                                
+
                                 // Position tooltip above the rotated pin
                                 const clickX = containerRect.left + (containerRect.width / 2);
                                 const clickY = containerRect.top - 20; // Adjust for the 45-degree rotated pin
-                                
+
                                 // Create feature-like structure for tooltip
                                 const feature = {
                                     properties: item
                                 };
-                                
+
                                 const tooltipContent = document.createElement('div');
                                 tooltipContent.innerHTML = createTooltipHTML(feature, index);
-                                
+
                                 // Create or update marker element to attach tooltip to
                                 let markerEl = document.getElementById(`marker-${index}`);
                                 if (!markerEl) {
@@ -1293,7 +1330,7 @@
                                     markerEl.style.top = `${clickY}px`;
                                     markerEl.style.left = `${clickX}px`;
                                 }
-                                
+
                                 // Hide any existing tooltips
                                 Object.values(window.tippyInstances || {}).forEach(instance => {
                                     if (instance && instance.hide) {
@@ -1303,7 +1340,7 @@
                                         }
                                     }
                                 });
-                                
+
                                 // Create new tooltip instance
                                 window.tippyInstances = window.tippyInstances || {};
                                 window.tippyInstances[index] = tippy(markerEl, {
@@ -1333,10 +1370,10 @@
                                     interactiveBorder: 30,
                                     zIndex: 9999
                                 });
-                                
+
                                 window.tippyInstances[index].show();
                             };
-                            
+
                             // Store marker with its metadata for filtering
                             markers.push({
                                 marker,
@@ -1356,7 +1393,7 @@
                         const selectedDistrict = document.getElementById('districtFilter').value;
                         const selectedVillage = document.getElementById('villageFilter').value;
                         const selectedPriority = document.getElementById('priorityFilter').value;
-                        
+
                         sampleData.forEach((item, index) => {
                             if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
                                 // Apply filters
@@ -1364,17 +1401,17 @@
                                     const itemDistrict = item['რაიონი']?.trim() || '';
                                     const itemVillage = item['სოფელი']?.trim() || '';
                                     const itemPriority = item['პრიორიტეტი']?.trim() || '';
-                                    
+
                                     const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
                                     const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
                                     const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
-                                    
+
                                     if (!matchesDistrict || !matchesVillage || !matchesPriority) return;
                                 }
-                                
+
                                 let color;
                                 const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
-                                
+
                                 if (status === "მომლოდინე") {
                                     color = '#e74c3c';
                                 } else if (status === "აღმოუჩინეს დახმარება") {
@@ -1387,8 +1424,8 @@
                                 if (!locationGroups[key]) {
                                     locationGroups[key] = [];
                                 }
-                                locationGroups[key].push({ 
-                                    item, 
+                                locationGroups[key].push({
+                                    item,
                                     index,
                                     fillColor: color,
                                     strokeColor: color
@@ -1401,15 +1438,15 @@
                             // For single items, use normal size; for groups make them smaller
                             const isGroup = group.length > 1;
                             const sizeMultiplier = isGroup ? 0.7 : 1.0; // 30% smaller when in a group
-                            
+
                             return group.map((entry, groupIndex) => {
                                 const { item, index, fillColor, strokeColor } = entry;
                                 const baseRadius = calculatePolygonSize(map);
-                                
+
                                 // Only apply offset if we have more than one item at this location
                                 let offsetLon = item.lon;
                                 let offsetLat = item.lat;
-                                
+
                                 if (isGroup) {
                                     const offset = calculatePointOffset(groupIndex, baseRadius);
                                     offsetLon = item.lon + offset.x;
@@ -1472,21 +1509,21 @@
                     window.tippyInstances = {};
 
                     // Add click event for polygons with improved tooltip behavior
-                    map.on('click', 'location-polygons', function(e) {
+                    map.on('click', 'location-polygons', function (e) {
                         e.preventDefault(); // Prevent map click from triggering
                         if (e.features.length > 0) {
                             const feature = e.features[0];
                             const id = feature.properties.id;
                             highlightPolygon(map, id);
-                            
+
                             // Get click position - adjust to match similar positioning as the pins
                             const clickX = e.point.x;
                             const clickY = e.point.y - 15; // Position higher to match pin tooltip placement
-                            
+
                             // Create tooltip content with the ID for close button reference
                             const tooltipContent = document.createElement('div');
                             tooltipContent.innerHTML = createTooltipHTML(feature, id);
-                            
+
                             // Create marker element to attach tooltip to
                             let marker = document.getElementById(`marker-${id}`);
                             if (!marker) {
@@ -1502,14 +1539,14 @@
                                 marker.style.top = `${clickY}px`;
                                 marker.style.left = `${clickX}px`;
                             }
-                            
+
                             // Hide any existing tooltips first to ensure only one is shown at a time
                             Object.values(window.tippyInstances || {}).forEach(instance => {
                                 if (instance && instance.hide) {
                                     instance.hide();
                                 }
                             });
-                            
+
                             // Create tippy instance
                             setTimeout(() => {
                                 // Create new instance on the marker element
@@ -1541,7 +1578,7 @@
                                     interactiveBorder: 30,
                                     zIndex: 9999
                                 });
-                                
+
                                 // Show the tooltip
                                 if (window.tippyInstances[id] && window.tippyInstances[id].show) {
                                     window.tippyInstances[id].show();
@@ -1551,16 +1588,16 @@
                     });
 
                     // Change cursor on polygon hover
-                    map.on('mouseenter', 'location-polygons', function(e) {
+                    map.on('mouseenter', 'location-polygons', function (e) {
                         map.getCanvas().style.cursor = 'pointer';
                     });
-                    
-                    map.on('mouseleave', 'location-polygons', function(e) {
+
+                    map.on('mouseleave', 'location-polygons', function (e) {
                         map.getCanvas().style.cursor = '';
                     });
 
                     // Update tooltip positions when map moves
-                    map.on('move', function() {
+                    map.on('move', function () {
                         // Hide click tooltips
                         Object.values(window.tippyInstances || {}).forEach(instance => {
                             if (instance && instance.state && instance.state.isVisible) {
@@ -1568,12 +1605,12 @@
                             }
                         });
                     });
-                    
+
                     // Update polygon sizes when zoom changes
-                    map.on('zoom', function() {
+                    map.on('zoom', function () {
                         // Update features with new polygon sizes, passing current filter state
                         const updatedFeatures = updateFeatures(true);
-                        
+
                         // Update the source data
                         map.getSource('locations').setData({
                             type: 'FeatureCollection',
@@ -1588,9 +1625,9 @@
                             document.querySelectorAll('.map-pin').forEach(pin => {
                                 pin.classList.remove('highlighted');
                             });
-                            
+
                             highlightPolygon(map, -1); // Pass invalid index to reset all
-                            
+
                             // Close any open tooltips
                             Object.values(window.tippyInstances || {}).forEach(instance => {
                                 if (instance && instance.hide) {
@@ -1602,7 +1639,7 @@
 
                     // Add a button to toggle the legend visibility on mobile
                     const legendElement = document.querySelector('.map-legend');
-                    
+
                     // Add responsiveness for the legend
                     function updateLegendPosition() {
                         if (window.innerWidth <= 768) {
@@ -1617,15 +1654,15 @@
                             legendElement.style.transform = 'none';
                         }
                     }
-                    
+
                     // Call it initially
                     updateLegendPosition();
-                    
+
                     // Update on resize
                     window.addEventListener('resize', updateLegendPosition);
                 });
             })
-            .catch(function(error) {
+            .catch(function (error) {
                 console.error("Error loading the data:", error);
             });
 
@@ -1633,10 +1670,10 @@
             const panel = document.getElementById('tabs-panel');
             const map = document.getElementById('map');
             const isHidden = panel.style.display === 'none' || !panel.style.display;
-            
+
             panel.style.display = isHidden ? 'block' : 'none';
             map.classList.toggle('panel-visible');
-            
+
             if (window.map) {
                 window.map.resize();
             }
@@ -1646,11 +1683,11 @@
         document.querySelectorAll('.tab-button').forEach(button => {
             button.addEventListener('click', () => {
                 const targetTab = button.dataset.tab;
-                
+
                 // Remove active class from all buttons and contents
                 document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
+
                 // Add active class to clicked button and corresponding content
                 button.classList.add('active');
                 const content = document.getElementById(targetTab);
@@ -1666,4 +1703,5 @@
         }
     </script>
 </body>
+
 </html>
