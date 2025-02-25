@@ -220,6 +220,52 @@
         .card.expanded .expand-icon {
             transform: rotate(180deg);
         }
+
+        /* Add highlighted polygon styles */
+        .highlighted-card {
+            background-color: #f8d7da;
+        }
+
+        /* Bottom panel styles */
+        #bottom-panel {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            right: 300px;
+            height: 600px;
+            background: white;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: none;
+        }
+
+        #bottom-panel iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .toggle-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .toggle-panel:hover {
+            background: #2980b9;
+        }
+
+        /* Adjust map height when panel is visible */
+        #map.panel-visible {
+            bottom: 300px;
+        }
     </style>
 </head>
 <body>
@@ -232,8 +278,27 @@
         </a>
         <div id="cards-container"></div>
     </div>
+    <button class="toggle-panel" onclick="togglePanel()">Toggle Spreadsheet</button>
+    <div id="bottom-panel">
+        <iframe src="https://docs.google.com/spreadsheets/d/1cWGBzYPa93_NZq8ZwtqF94fhwIdovrWkPg6-PRNaVHc/edit?usp=sharing" allow="autoplay"></iframe>
+    </div>
 
     <script>
+        // Add this function before other scripts
+        function togglePanel() {
+            const panel = document.getElementById('bottom-panel');
+            const map = document.getElementById('map');
+            const isHidden = panel.style.display === 'none' || !panel.style.display;
+            
+            panel.style.display = isHidden ? 'block' : 'none';
+            map.classList.toggle('panel-visible');
+            
+            // Trigger map resize to ensure proper rendering
+            if (window.map) {
+                window.map.resize();
+            }
+        }
+
         // Calculate polygon size based on zoom level with adjusted sizes
         function calculatePolygonSize(map) {
             // Get the current zoom level
@@ -328,6 +393,37 @@
             }
         }
 
+        // Add highlightPolygon function before map initialization
+        function highlightPolygon(map, index) {
+            // Reset all polygons
+            map.setPaintProperty('location-polygons', 'fill-opacity', [
+                'case',
+                ['==', ['get', 'id'], index],
+                0.9, // highlighted opacity
+                0.6  // default opacity
+            ]);
+
+            // Update stroke color and width for highlighted polygon
+            map.setPaintProperty('location-polygons-outline', 'line-color', [
+                'case',
+                ['==', ['get', 'id'], index],
+                '#000000', // black stroke for highlighted
+                ['get', 'strokeColor'] // default stroke color
+            ]);
+
+            map.setPaintProperty('location-polygons-outline', 'line-width', [
+                'case',
+                ['==', ['get', 'id'], index],
+                5,    // highlighted width
+                2     // default width
+            ]);
+
+            // Remove highlight from all cards
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('highlighted-card'));
+            // Add highlight to selected card
+            document.querySelector(`.card[data-index="${index}"]`)?.classList.add('highlighted-card');
+        }
+
         // Initialize map after data is loaded
         d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyIwzLFtS2150qbKVVti1uVfgDhwID3Ec6NLRrvX4AlABpxneejy1-lgTF/pub?gid=0&single=true&output=csv")
             .then(function(data) {
@@ -342,6 +438,7 @@
                 const cardsContainer = document.getElementById('cards-container');
                 sampleData.forEach((item, index) => {
                     const card = document.createElement('div');
+                    card.setAttribute('data-index', index); // Add index as data attribute
                     const isPending = item["სტატუსი (მომლოდინე/ დასრულებულია)"] === "მომლოდინე";
                     card.className = `card ${isPending ? 'pending' : 'completed'}`;
                     
@@ -386,6 +483,7 @@
                                 center: [item.lon, item.lat],
                                 zoom: 12
                             });
+                            highlightPolygon(map, index);
                         }
                     });
 
@@ -485,10 +583,11 @@
 
                     // Add click events to polygons
                     map.on('click', 'location-polygons', function(e) {
+                        e.preventDefault(); // Prevent map click from triggering
                         if (e.features.length > 0) {
                             const feature = e.features[0];
                             const id = feature.properties.id;
-                            
+                            highlightPolygon(map, id);
                             // Get click position
                             const clickX = e.point.x;
                             const clickY = e.point.y;
@@ -574,6 +673,13 @@
                             type: 'FeatureCollection',
                             features: updatedFeatures
                         });
+                    });
+
+                    // Add click handler for map to reset highlights when clicking elsewhere
+                    map.on('click', (e) => {
+                        if (!e.defaultPrevented) { // Only if not clicking on a polygon
+                            highlightPolygon(map, -1); // Pass invalid index to reset all
+                        }
                     });
                 });
             })
