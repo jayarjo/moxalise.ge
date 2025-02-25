@@ -455,6 +455,15 @@
                 right: 0;
             }
         }
+
+        .map-pin {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -754,52 +763,90 @@
 
                 // Wait for the map to load
                 map.on('load', function() {
+                    // Create markers first and only once
+                    const markers = [];
+                    sampleData.forEach((item, index) => {
+                        if (item.lat && item.lon && item["ზუსტი ადგილმდებარეობა"]?.trim()) {
+                            let color;
+                            const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
+                            
+                            if (status === "მომლოდინე") {
+                                color = '#e74c3c';  // Red
+                            } else if (status === "აღმოუჩინეს დახმარება") {
+                                color = '#2ecc71';  // Green
+                            } else {
+                                color = '#95a5a6';  // Gray
+                            }
+
+                            const el = document.createElement('div');
+                            el.className = 'map-pin';
+                            el.style.backgroundColor = color;
+                            
+                            const marker = new maplibregl.Marker({
+                                element: el,
+                                anchor: 'center'
+                            }).setLngLat([item.lon, item.lat])
+                              .addTo(map);
+                                
+                            markers.push({
+                                marker,
+                                id: index,
+                                properties: item
+                            });
+                        }
+                    });
+
+                    // Store markers globally for later access
+                    window.locationMarkers = markers;
+
                     // Function to update features based on current zoom
                     function updateFeatures() {
-                        // Group points by location
+                        // Group points by location (only for non-exact locations)
                         const locationGroups = {};
+                        
                         sampleData.forEach((item, index) => {
-                            if (item.lat && item.lon) {
+                            if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
+                                let color;
+                                const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
+                                
+                                if (status === "მომლოდინე") {
+                                    color = '#e74c3c';
+                                } else if (status === "აღმოუჩინეს დახმარება") {
+                                    color = '#2ecc71';
+                                } else {
+                                    color = '#95a5a6';
+                                }
+
                                 const key = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
                                 if (!locationGroups[key]) {
                                     locationGroups[key] = [];
                                 }
-                                locationGroups[key].push({ item, index });
+                                locationGroups[key].push({ 
+                                    item, 
+                                    index,
+                                    fillColor: color,
+                                    strokeColor: color
+                                });
                             }
                         });
 
-                        // Create features with offsets for overlapping points
+                        // Create polygon features
                         return Object.values(locationGroups).flatMap(group => {
                             return group.map((entry, groupIndex) => {
-                                const { item, index } = entry;
+                                const { item, index, fillColor, strokeColor } = entry;
                                 const baseRadius = calculatePolygonSize(map);
                                 const offset = calculatePointOffset(groupIndex, baseRadius * 0.5);
                                 
                                 const offsetLon = item.lon + offset.x;
                                 const offsetLat = item.lat + offset.y;
-                                
-                                // Determine colors based on status
-                                let fillColor, strokeColor;
-                                const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
-                                
-                                if (status === "მომლოდინე") {
-                                    fillColor = '#e74c3c';  // Red
-                                    strokeColor = '#c0392b';
-                                } else if (status === "აღმოუჩინეს დახმარება") {
-                                    fillColor = '#2ecc71';  // Green
-                                    strokeColor = '#27ae60';
-                                } else {
-                                    fillColor = '#95a5a6';  // Gray
-                                    strokeColor = '#7f8c8d';
-                                }
 
                                 return {
                                     type: 'Feature',
                                     properties: {
                                         id: index,
                                         ...item,
-                                        fillColor: fillColor,
-                                        strokeColor: strokeColor
+                                        fillColor,
+                                        strokeColor
                                     },
                                     geometry: {
                                         type: 'Polygon',
@@ -809,7 +856,7 @@
                             });
                         });
                     }
-                    
+
                     // Initial features
                     const features = updateFeatures();
 
@@ -909,6 +956,64 @@
                                 }
                             }, 0);
                         }
+                    });
+
+                    // Add click handlers for markers
+                    window.locationMarkers?.forEach(({marker, id, properties}) => {
+                        marker.getElement().addEventListener('click', (e) => {
+                            e.preventDefault();
+                            
+                            highlightPolygon(map, id);
+                            
+                            const rect = marker.getElement().getBoundingClientRect();
+                            const clickX = rect.left + rect.width/2;
+                            const clickY = rect.top;
+                            
+                            const tooltipContent = document.createElement('div');
+                            tooltipContent.innerHTML = createTooltipHTML({properties}, id);
+                            
+                            let markerEl = document.getElementById(`marker-${id}`);
+                            if (!markerEl) {
+                                markerEl = document.createElement('div');
+                                markerEl.id = `marker-${id}`;
+                                markerEl.style.position = 'absolute';
+                                markerEl.style.top = `${clickY}px`;
+                                markerEl.style.left = `${clickX}px`;
+                                markerEl.style.width = '1px';
+                                markerEl.style.height = '1px';
+                                document.body.appendChild(markerEl);
+                            }
+                            
+                            // Hide any existing tooltips
+                            Object.values(window.tippyInstances).forEach(instance => {
+                                if (instance && instance.hide) {
+                                    instance.hide();
+                                }
+                            });
+                            
+                            setTimeout(() => {
+                                if (window.tippyInstances[id]) {
+                                    window.tippyInstances[id].destroy();
+                                }
+                                
+                                window.tippyInstances[id] = tippy(markerEl, {
+                                    content: tooltipContent,
+                                    allowHTML: true,
+                                    interactive: true,
+                                    theme: 'light',
+                                    placement: 'top',
+                                    trigger: 'manual',
+                                    appendTo: document.body,
+                                    showOnCreate: true,
+                                    hideOnClick: false,
+                                    interactiveBorder: 30
+                                });
+                                
+                                if (window.tippyInstances[id].show) {
+                                    window.tippyInstances[id].show();
+                                }
+                            }, 0);
+                        });
                     });
 
                     // Change cursor on polygon hover
