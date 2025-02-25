@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MapLibre OSM Map with Polygon Markers</title>
+    <title>გურიის დიდთოვლობით დაზარალებული მოსახლეობის დახმარება</title>
     <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
@@ -282,11 +282,21 @@
         #map.panel-visible {
             bottom: 300px;
         }
+
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            line-height: 1.4;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div id="map"></div>
     <div id="sidebar">
+        <h1 class="sidebar-title">გურიის დიდთოვლობით დაზარალებული მოსახლეობის დახმარება</h1>
         <a href="https://docs.google.com/spreadsheets/d/1cWGBzYPa93_NZq8ZwtqF94fhwIdovrWkPg6-PRNaVHc/edit#gid=0" 
            target="_blank" 
            class="source-link">
@@ -367,6 +377,12 @@
             // Simple regex to match common URL patterns
             const urlPattern = /^(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
             return urlPattern.test(str);
+        }
+        
+        // Function to format values, converting URLs to links
+        function formatValue(value) {
+            if (!value) return '-';
+            return isURL(value) ? `<a href="${value}" target="_blank">${value}</a>` : value;
         }
         
         // Create HTML content for the tooltip without making assumptions about data
@@ -470,36 +486,27 @@
                 const cardsContainer = document.getElementById('cards-container');
                 sampleData.forEach((item, index) => {
                     const card = document.createElement('div');
-                    card.setAttribute('data-index', index); // Add index as data attribute
+                    card.setAttribute('data-index', index);
                     const isPending = item["სტატუსი (მომლოდინე/ დასრულებულია)"] === "მომლოდინე";
                     card.className = `card ${isPending ? 'pending' : 'completed'}`;
-                    
+
                     const needsTitle = item[`საჭიროება(ები)
 (საკვები, მედიკამენტები, ევაკუაცია, ექიმი, საწვავი, დათოლვა, სხვა)    `];
 
-                    // Helper function to format value as link if it's a URL
-                    const formatValue = (value) => {
-                        if (!value) return '-';
-                        return isURL(value) ? `<a href="${value}" target="_blank">${value}</a>` : value;
-                    };
+                    // Get first item's keys to determine structure
+                    const keys = Object.keys(item).filter(key => 
+                        !['id', 'fillColor', 'strokeColor', 'lat', 'lon'].includes(key)
+                    );
 
                     let cardContent = `
                         <div class="card-header">
-                            <h3 class="card-title">${needsTitle}</h3>
+                            <h3 class="card-title">${needsTitle||[keys[0]] || ''}</h3>
                             <span class="expand-icon">▼</span>
                         </div>
                         <div class="card-content">
-                            <p><strong>სახელი, გვარი:</strong> ${formatValue(item["სახელი, გვარი"])}</p>
-                            <p><strong>რაიონი:</strong> ${formatValue(item["რაიონი"])}</p>
-                            <p><strong>სოფელი:</strong> ${formatValue(item["სოფელი"])}</p>
-                            <p><strong>ზუსტი ადგილმდებარეობა:</strong> ${formatValue(item["ზუსტი ადგილმდებარეობა"])}</p>
-                            <p><strong>ტელეფონი:</strong> ${formatValue(item["ტელეფონი"])}</p>
-                            <p><strong>დეტალური ინფორმაცია:</strong> ${formatValue(item["დეტალური ინფორმაცია"])}</p>
-                            <p><strong>სტატუსი:</strong> 
-                                <span class="${isPending ? 'status-pending' : 'status-completed'}">
-                                    ${item["სტატუსი (მომლოდინე/ დასრულებულია)"] || '-'}
-                                </span>
-                            </p>
+                            ${keys.slice(1).map(key => `
+                                <p><strong>${key}:</strong> ${formatValue(item[key])}</p>
+                            `).join('')}
                         </div>`;
 
                     card.innerHTML = cardContent;
