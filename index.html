@@ -564,9 +564,9 @@
         }
         
         // Function to create polygon coordinates around a center point
-        function createPolygonCoordinates(map, centerLng, centerLat, sides = 6) {
+        function createPolygonCoordinates(map, centerLng, centerLat, sides = 6, sizeMultiplier = 1) {
             // Get a much larger radius based on zoom level
-            const radius = calculatePolygonSize(map);
+            const radius = calculatePolygonSize(map) * sizeMultiplier;
             
             // Use fixed rotation based on coordinates instead of random
             const fixedRotation = Math.atan2(centerLat, centerLng);
@@ -678,12 +678,42 @@
 
         // Add this function before createPolygonCoordinates
         function calculatePointOffset(index, baseRadius) {
-            // Create a spiral pattern
-            const angle = index * 0.5; // Rotate each point by 0.5 radians
-            const radius = baseRadius * (1 + index * 0.2); // Increase radius for each point
+            // Create a honeycomb pattern for hexagons
+            // In a honeycomb, each hexagon can have up to 6 neighbors
+            
+            // Make hexagons 30% smaller when they're part of a group
+            const scaledRadius = baseRadius * 0.7; // 30% smaller
+            
+            if (index === 0) {
+                // First item is centered
+                return { x: 0, y: 0 };
+            }
+            
+            // Determine ring and position in ring using hexagonal grid coordinates
+            // First ring starts at index 1 and has 6 positions
+            // Second ring starts at index 7 and has 12 positions, etc.
+            let ring = 1;
+            let remainingIndex = index - 1;
+            
+            // Find which ring this index belongs to
+            while (remainingIndex >= 6 * ring) {
+                remainingIndex -= 6 * ring;
+                ring++;
+            }
+            
+            // Position within the current ring
+            const positionInRing = remainingIndex;
+            
+            // Angle within the ring (60 degree segments)
+            const angle = (positionInRing * Math.PI / 3) + Math.PI / 6; // 60 degrees per segment, offset 30 degrees
+            
+            // Distance from center increases with ring number
+            // Use 1.5 * scaledRadius for optimal hexagon packing (this is the key for perfect tiling)
+            const distance = ring * 1.5 * scaledRadius;
+            
             return {
-                x: Math.cos(angle) * radius,
-                y: Math.sin(angle) * radius
+                x: Math.cos(angle) * distance,
+                y: Math.sin(angle) * distance
             };
         }
 
@@ -1058,8 +1088,8 @@
                             if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
                                 // Apply filters
                                 if (filtered) {
-                                    const matchesDistrict = !selectedDistrict || item['რაიონი'] === selectedDistrict;
-                                    const matchesVillage = !selectedVillage || item['სოფელი'] === selectedVillage;
+                                    const matchesDistrict = !selectedDistrict || item['რაიონი']?.trim() === selectedDistrict;
+                                    const matchesVillage = !selectedVillage || item['სოფელი']?.trim() === selectedVillage;
                                     if (!matchesDistrict || !matchesVillage) return;
                                 }
                                 
@@ -1089,13 +1119,23 @@
 
                         // Create polygon features
                         return Object.values(locationGroups).flatMap(group => {
+                            // For single items, use normal size; for groups make them smaller
+                            const isGroup = group.length > 1;
+                            const sizeMultiplier = isGroup ? 0.7 : 1.0; // 30% smaller when in a group
+                            
                             return group.map((entry, groupIndex) => {
                                 const { item, index, fillColor, strokeColor } = entry;
                                 const baseRadius = calculatePolygonSize(map);
-                                const offset = calculatePointOffset(groupIndex, baseRadius * 0.5);
                                 
-                                const offsetLon = item.lon + offset.x;
-                                const offsetLat = item.lat + offset.y;
+                                // Only apply offset if we have more than one item at this location
+                                let offsetLon = item.lon;
+                                let offsetLat = item.lat;
+                                
+                                if (isGroup) {
+                                    const offset = calculatePointOffset(groupIndex, baseRadius);
+                                    offsetLon = item.lon + offset.x;
+                                    offsetLat = item.lat + offset.y;
+                                }
 
                                 return {
                                     type: 'Feature',
@@ -1103,11 +1143,12 @@
                                         id: index,
                                         ...item,
                                         fillColor,
-                                        strokeColor
+                                        strokeColor,
+                                        inGroup: isGroup
                                     },
                                     geometry: {
                                         type: 'Polygon',
-                                        coordinates: [createPolygonCoordinates(map, offsetLon, offsetLat)]
+                                        coordinates: [createPolygonCoordinates(map, offsetLon, offsetLat, 6, sizeMultiplier)]
                                     }
                                 };
                             });
