@@ -26,6 +26,7 @@ function updateFeatures(filtered = false) {
     const selectedDistrict = document.getElementById('districtFilter').value;
     const selectedVillage = document.getElementById('villageFilter').value;
     const selectedPriority = document.getElementById('priorityFilter').value;
+    const selectedStatus = document.getElementById('statusFilter').value;
 
     sampleData.forEach((item, index) => {
         if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
@@ -34,12 +35,18 @@ function updateFeatures(filtered = false) {
                 const itemDistrict = item['რაიონი']?.trim() || '';
                 const itemVillage = item['სოფელი']?.trim() || '';
                 const itemPriority = item['პრიორიტეტი']?.trim() || '';
+                const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
 
+                // Special handling for empty status
+                const matchesStatus = !selectedStatus || 
+                    (selectedStatus === "EMPTY_STATUS" && itemStatus === '') || 
+                    itemStatus === selectedStatus;
+                    
                 const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
                 const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
                 const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
 
-                if (!matchesDistrict || !matchesVillage || !matchesPriority) return;
+                if (!matchesDistrict || !matchesVillage || !matchesPriority || !matchesStatus) return;
             }
 
             let color;
@@ -321,10 +328,12 @@ function initializeFilters(data) {
     const districts = [...new Set(data.map(item => item['რაიონი']?.trim()).filter(Boolean))];
     const villages = [...new Set(data.map(item => item['სოფელი']?.trim()).filter(Boolean))];
     const priorities = [...new Set(data.map(item => item['პრიორიტეტი']?.trim()).filter(Boolean))];
+    const statuses = [...new Set(data.map(item => item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim()).filter(Boolean))];
 
     const districtSelect = document.getElementById('districtFilter');
     const villageSelect = document.getElementById('villageFilter');
     const prioritySelect = document.getElementById('priorityFilter');
+    const statusSelect = document.getElementById('statusFilter');
 
     // Clear existing options (except the first one)
     while (districtSelect.options.length > 1) {
@@ -337,6 +346,10 @@ function initializeFilters(data) {
 
     while (prioritySelect.options.length > 1) {
         prioritySelect.remove(1);
+    }
+
+    while (statusSelect.options.length > 1) {
+        statusSelect.remove(1);
     }
 
     districts.sort().forEach(district => {
@@ -360,10 +373,25 @@ function initializeFilters(data) {
         prioritySelect.appendChild(option);
     });
 
+    // Add special option for empty statuses
+    const emptyStatusOption = document.createElement('option');
+    emptyStatusOption.value = "EMPTY_STATUS";
+    emptyStatusOption.textContent = "უცნობი სტატუსი";
+    statusSelect.appendChild(emptyStatusOption);
+
+    // Add non-empty statuses
+    statuses.sort().forEach(status => {
+        const option = document.createElement('option');
+        option.value = status;
+        option.textContent = status;
+        statusSelect.appendChild(option);
+    });
+
     // Add filter change handlers
     districtSelect.addEventListener('change', applyFilters);
     villageSelect.addEventListener('change', applyFilters);
     prioritySelect.addEventListener('change', applyFilters);
+    statusSelect.addEventListener('change', applyFilters);
 }
 
 // Update applyFilters function with fixed filtering logic
@@ -373,6 +401,7 @@ function applyFilters() {
     const selectedDistrict = document.getElementById('districtFilter').value;
     const selectedVillage = document.getElementById('villageFilter').value;
     const selectedPriority = document.getElementById('priorityFilter').value;
+    const selectedStatus = document.getElementById('statusFilter').value;
 
     // Filter cards
     document.querySelectorAll('.card').forEach(card => {
@@ -383,12 +412,18 @@ function applyFilters() {
         const itemDistrict = item['რაიონი']?.trim() || '';
         const itemVillage = item['სოფელი']?.trim() || '';
         const itemPriority = item['პრიორიტეტი']?.trim() || '';
+        const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
 
+        // Special handling for empty status
+        const matchesStatus = !selectedStatus || 
+            (selectedStatus === "EMPTY_STATUS" && itemStatus === '') || 
+            itemStatus === selectedStatus;
+            
         const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
         const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
         const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
 
-        card.style.display = (matchesDistrict && matchesVillage && matchesPriority) ? 'block' : 'none';
+        card.style.display = (matchesDistrict && matchesVillage && matchesPriority && matchesStatus) ? 'block' : 'none';
     });
 
     // Update markers visibility
@@ -397,12 +432,18 @@ function applyFilters() {
         const propertyDistrict = properties['რაიონი']?.trim() || '';
         const propertyVillage = properties['სოფელი']?.trim() || '';
         const propertyPriority = properties['პრიორიტეტი']?.trim() || '';
+        const propertyStatus = properties["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
 
+        // Special handling for empty status
+        const matchesStatus = !selectedStatus || 
+            (selectedStatus === "EMPTY_STATUS" && propertyStatus === '') || 
+            propertyStatus === selectedStatus;
+            
         const matchesDistrict = !selectedDistrict || propertyDistrict === selectedDistrict;
         const matchesVillage = !selectedVillage || propertyVillage === selectedVillage;
         const matchesPriority = !selectedPriority || propertyPriority === selectedPriority;
 
-        marker.getElement().style.display = (matchesDistrict && matchesVillage && matchesPriority) ? 'block' : 'none';
+        marker.getElement().style.display = (matchesDistrict && matchesVillage && matchesPriority && matchesStatus) ? 'block' : 'none';
     });
 
     // Update polygon features
@@ -413,12 +454,18 @@ function applyFilters() {
             const itemDistrict = item['რაიონი']?.trim() || '';
             const itemVillage = item['სოფელი']?.trim() || '';
             const itemPriority = item['პრიორიტეტი']?.trim() || '';
+            const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
 
+            // Special handling for empty status
+            const matchesStatus = !selectedStatus || 
+                (selectedStatus === "EMPTY_STATUS" && itemStatus === '') || 
+                itemStatus === selectedStatus;
+                
             const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
             const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
             const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
 
-            if (matchesDistrict && matchesVillage && matchesPriority) {
+            if (matchesDistrict && matchesVillage && matchesPriority && matchesStatus) {
                 let color;
                 const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
 
