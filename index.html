@@ -555,6 +555,13 @@
             z-index: 100;
             font-size: 14px;
             max-width: 220px;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .map-legend.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
         }
 
         .legend-title {
@@ -563,6 +570,49 @@
             font-size: 15px;
             border-bottom: 1px solid #eee;
             padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .legend-close {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .legend-close:hover {
+            background-color: #c0392b;
+        }
+
+        .legend-toggle {
+            position: absolute;
+            bottom: 30px;
+            left: 10px;
+            background: white;
+            color: #333;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            cursor: pointer;
+            font-size: 13px;
+            z-index: 99;
+            display: none;
+        }
+
+        .legend-toggle:hover {
+            background-color: #f5f5f5;
         }
 
         .legend-item {
@@ -612,7 +662,10 @@
 
     <!-- Map Legend -->
     <div class="map-legend">
-        <div class="legend-title">რუკის ლეგენდა</div>
+        <div class="legend-title">
+            რუკის ლეგენდა
+            <button class="legend-close" onclick="toggleLegend()">✕</button>
+        </div>
         <div class="legend-item">
             <div class="legend-pin" style="background-color: #e74c3c;"></div>
             <span>ელოდება დახმარებას</span>
@@ -630,6 +683,7 @@
             <span>დაახლოებითი მდებარეობა</span>
         </div>
     </div>
+    <button class="legend-toggle" onclick="toggleLegend()">ლეგენდა</button>
 
     <div id="sidebar">
         <h1 class="sidebar-title">გურიის დიდთოვლობით დაზარალებული მოსახლეობის დახმარება</h1>
@@ -674,6 +728,22 @@
         let map;
         let sampleData = [];
         let locationMarkers = [];
+
+        // Function to toggle the map legend visibility
+        function toggleLegend() {
+            const legend = document.querySelector('.map-legend');
+            const toggleButton = document.querySelector('.legend-toggle');
+            
+            legend.classList.toggle('hidden');
+            
+            // Show/hide the toggle button based on legend visibility
+            if (legend.classList.contains('hidden')) {
+                toggleButton.style.display = 'none';
+            } 
+            
+        }
+        
+
 
         // Add this function before other scripts
         function togglePanel() {
