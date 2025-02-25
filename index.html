@@ -759,6 +759,28 @@
         .location-button:hover {
             background: #2980b9;
         }
+        
+        /* Add styles for the satellite toggle button */
+        .satellite-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 350px; /* Position it next to the location button */
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .satellite-toggle:hover {
+            background: #2980b9;
+        }
+        
+        .satellite-toggle.active {
+            background: #2c3e50;
+        }
 
         .user-location-marker {
             width: 20px;
@@ -786,6 +808,11 @@
             .location-button {
                 bottom: 20px;
                 left: 20px;
+            }
+            
+            .satellite-toggle {
+                bottom: 20px;
+                left: 145px; /* Position it next to the location button on mobile */
             }
         }
     </style>
@@ -847,6 +874,7 @@
     </div>
     <button class="toggle-panel" onclick="toggleTabs()">მონაცემების პანელი</button>
     <button class="location-button" onclick="showMyLocation()">ჩემი ლოკაცია</button>
+    <button class="satellite-toggle" onclick="toggleSatellite()">სატელიტური რუკა</button>
     <div class="tabs-panel" id="tabs-panel">
         <div class="tabs-header">
             <div>
@@ -881,7 +909,91 @@
             if (legend.classList.contains('hidden')) {
                 toggleButton.style.display = 'none';
             }
+        }
 
+        // Function to update features based on current zoom
+        function updateFeatures(filtered = false) {
+            // Group points by location (only for non-exact locations)
+            const locationGroups = {};
+            const selectedDistrict = document.getElementById('districtFilter').value;
+            const selectedVillage = document.getElementById('villageFilter').value;
+            const selectedPriority = document.getElementById('priorityFilter').value;
+
+            sampleData.forEach((item, index) => {
+                if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
+                    // Apply filters
+                    if (filtered) {
+                        const itemDistrict = item['რაიონი']?.trim() || '';
+                        const itemVillage = item['სოფელი']?.trim() || '';
+                        const itemPriority = item['პრიორიტეტი']?.trim() || '';
+
+                        const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
+                        const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
+                        const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
+
+                        if (!matchesDistrict || !matchesVillage || !matchesPriority) return;
+                    }
+
+                    let color;
+                    const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
+
+                    if (status === "მომლოდინე") {
+                        color = '#e74c3c';
+                    } else if (status === "აღმოუჩინეს დახმარება") {
+                        color = '#2ecc71';
+                    } else {
+                        color = '#95a5a6';
+                    }
+
+                    const key = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
+                    if (!locationGroups[key]) {
+                        locationGroups[key] = [];
+                    }
+                    locationGroups[key].push({
+                        item,
+                        index,
+                        fillColor: color,
+                        strokeColor: color
+                    });
+                }
+            });
+
+            // Create polygon features
+            return Object.values(locationGroups).flatMap(group => {
+                // For single items, use normal size; for groups make them smaller
+                const isGroup = group.length > 1;
+                const sizeMultiplier = isGroup ? 0.7 : 1.0; // 30% smaller when in a group
+
+                return group.map((entry, groupIndex) => {
+                    const { item, index, fillColor, strokeColor } = entry;
+                    const baseRadius = calculatePolygonSize(map);
+
+                    // Only apply offset if we have more than one item at this location
+                    let offsetLon = item.lon;
+                    let offsetLat = item.lat;
+
+                    if (isGroup) {
+                        const offset = calculatePointOffset(groupIndex, baseRadius);
+                        offsetLon = item.lon + offset.x;
+                        offsetLat = item.lat + offset.y;
+                    }
+
+                    return {
+                        type: 'Feature',
+                        properties: {
+                            id: index,
+                            ...item,
+                            fillColor,
+                            strokeColor,
+                            inGroup: isGroup
+                        },
+                        geometry: {
+                            type: 'Polygon',
+                            coordinates: [createPolygonCoordinates(map, offsetLon, offsetLat, 6, sizeMultiplier)]
+                        }
+                    };
+                });
+            });
         }
 
         // Add this function before other scripts
@@ -1264,6 +1376,26 @@
                     return bounds;
                 }, { north: -90, south: 90, east: -180, west: 180 });
 
+                // Define standard map style
+                const standardStyle = {
+                    version: 8,
+                    sources: {
+                        'osm': {
+                            type: 'raster',
+                            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                            tileSize: 256,
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        }
+                    },
+                    layers: [{
+                        id: 'osm-tiles',
+                        type: 'raster',
+                        source: 'osm',
+                        minzoom: 0,
+                        maxzoom: 19
+                    }]
+                };
+
                 // Populate sidebar cards
                 const cardsContainer = document.getElementById('cards-container');
                 sampleData.forEach((item, index) => {
@@ -1326,24 +1458,7 @@
                 // Initialize the map
                 map = new maplibregl.Map({
                     container: 'map',
-                    style: {
-                        version: 8,
-                        sources: {
-                            'osm': {
-                                type: 'raster',
-                                tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-                                tileSize: 256,
-                                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            }
-                        },
-                        layers: [{
-                            id: 'osm-tiles',
-                            type: 'raster',
-                            source: 'osm',
-                            minzoom: 0,
-                            maxzoom: 19
-                        }]
-                    },
+                    style: standardStyle,
                     bounds: [
                         [bounds.west - 0.1, bounds.south - 0.1], // Add padding to bounds
                         [bounds.east + 0.1, bounds.north + 0.1]
@@ -1488,91 +1603,6 @@
                     // Store markers globally for later access
                     locationMarkers = markers;
 
-                    // Function to update features based on current zoom
-                    function updateFeatures(filtered = false) {
-                        // Group points by location (only for non-exact locations)
-                        const locationGroups = {};
-                        const selectedDistrict = document.getElementById('districtFilter').value;
-                        const selectedVillage = document.getElementById('villageFilter').value;
-                        const selectedPriority = document.getElementById('priorityFilter').value;
-
-                        sampleData.forEach((item, index) => {
-                            if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
-                                // Apply filters
-                                if (filtered) {
-                                    const itemDistrict = item['რაიონი']?.trim() || '';
-                                    const itemVillage = item['სოფელი']?.trim() || '';
-                                    const itemPriority = item['პრიორიტეტი']?.trim() || '';
-
-                                    const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
-                                    const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
-                                    const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
-
-                                    if (!matchesDistrict || !matchesVillage || !matchesPriority) return;
-                                }
-
-                                let color;
-                                const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
-
-                                if (status === "მომლოდინე") {
-                                    color = '#e74c3c';
-                                } else if (status === "აღმოუჩინეს დახმარება") {
-                                    color = '#2ecc71';
-                                } else {
-                                    color = '#95a5a6';
-                                }
-
-                                const key = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
-                                if (!locationGroups[key]) {
-                                    locationGroups[key] = [];
-                                }
-                                locationGroups[key].push({
-                                    item,
-                                    index,
-                                    fillColor: color,
-                                    strokeColor: color
-                                });
-                            }
-                        });
-
-                        // Create polygon features
-                        return Object.values(locationGroups).flatMap(group => {
-                            // For single items, use normal size; for groups make them smaller
-                            const isGroup = group.length > 1;
-                            const sizeMultiplier = isGroup ? 0.7 : 1.0; // 30% smaller when in a group
-
-                            return group.map((entry, groupIndex) => {
-                                const { item, index, fillColor, strokeColor } = entry;
-                                const baseRadius = calculatePolygonSize(map);
-
-                                // Only apply offset if we have more than one item at this location
-                                let offsetLon = item.lon;
-                                let offsetLat = item.lat;
-
-                                if (isGroup) {
-                                    const offset = calculatePointOffset(groupIndex, baseRadius);
-                                    offsetLon = item.lon + offset.x;
-                                    offsetLat = item.lat + offset.y;
-                                }
-
-                                return {
-                                    type: 'Feature',
-                                    properties: {
-                                        id: index,
-                                        ...item,
-                                        fillColor,
-                                        strokeColor,
-                                        inGroup: isGroup
-                                    },
-                                    geometry: {
-                                        type: 'Polygon',
-                                        coordinates: [createPolygonCoordinates(map, offsetLon, offsetLat, 6, sizeMultiplier)]
-                                    }
-                                };
-                            });
-                        });
-                    }
-
                     // Initial features
                     const features = updateFeatures();
 
@@ -1610,137 +1640,8 @@
                     // Make tippyInstances available globally so the close button can access it
                     window.tippyInstances = {};
 
-                    // Add click event for polygons with improved tooltip behavior
-                    map.on('click', 'location-polygons', function (e) {
-                        e.preventDefault(); // Prevent map click from triggering
-                        if (e.features.length > 0) {
-                            const feature = e.features[0];
-                            const id = feature.properties.id;
-                            highlightPolygon(map, id);
-
-                            // Get click position - adjust to match similar positioning as the pins
-                            const clickX = e.point.x;
-                            const clickY = e.point.y - 15; // Position higher to match pin tooltip placement
-
-                            // Create tooltip content with the ID for close button reference
-                            const tooltipContent = document.createElement('div');
-                            tooltipContent.innerHTML = createTooltipHTML(feature, id);
-
-                            // Create marker element to attach tooltip to
-                            let marker = document.getElementById(`marker-${id}`);
-                            if (!marker) {
-                                marker = document.createElement('div');
-                                marker.id = `marker-${id}`;
-                                marker.style.position = 'absolute';
-                                marker.style.top = `${clickY}px`;
-                                marker.style.left = `${clickX}px`;
-                                marker.style.width = '1px';
-                                marker.style.height = '1px';
-                                document.body.appendChild(marker);
-                            } else {
-                                marker.style.top = `${clickY}px`;
-                                marker.style.left = `${clickX}px`;
-                            }
-
-                            // Hide any existing tooltips first to ensure only one is shown at a time
-                            Object.values(window.tippyInstances || {}).forEach(instance => {
-                                if (instance && instance.hide) {
-                                    instance.hide();
-                                }
-                            });
-
-                            // Create tippy instance
-                            setTimeout(() => {
-                                // Create new instance on the marker element
-                                window.tippyInstances = window.tippyInstances || {};
-                                window.tippyInstances[id] = tippy(marker, {
-                                    content: tooltipContent,
-                                    allowHTML: true,
-                                    interactive: true,
-                                    theme: 'light',
-                                    placement: 'top',
-                                    trigger: 'manual',
-                                    appendTo: document.body,
-                                    showOnCreate: true,
-                                    hideOnClick: false,
-                                    offset: [0, 15],
-                                    distance: 15,
-                                    arrow: true,
-                                    popperOptions: {
-                                        strategy: 'fixed',
-                                        modifiers: [
-                                            {
-                                                name: 'preventOverflow',
-                                                options: {
-                                                    boundary: 'viewport',
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    interactiveBorder: 30,
-                                    zIndex: 9999
-                                });
-
-                                // Show the tooltip
-                                if (window.tippyInstances[id] && window.tippyInstances[id].show) {
-                                    window.tippyInstances[id].show();
-                                }
-                            }, 0);
-                        }
-                    });
-
-                    // Change cursor on polygon hover
-                    map.on('mouseenter', 'location-polygons', function (e) {
-                        map.getCanvas().style.cursor = 'pointer';
-                    });
-
-                    map.on('mouseleave', 'location-polygons', function (e) {
-                        map.getCanvas().style.cursor = '';
-                    });
-
-                    // Update tooltip positions when map moves
-                    map.on('move', function () {
-                        // Hide click tooltips
-                        Object.values(window.tippyInstances || {}).forEach(instance => {
-                            if (instance && instance.state && instance.state.isVisible) {
-                                instance.hide();
-                            }
-                        });
-                    });
-
-                    // Update polygon sizes when zoom changes
-                    map.on('zoom', function () {
-                        // Update features with new polygon sizes, passing current filter state
-                        const updatedFeatures = updateFeatures(true);
-
-                        // Update the source data
-                        map.getSource('locations').setData({
-                            type: 'FeatureCollection',
-                            features: updatedFeatures
-                        });
-                    });
-
-                    // Add click handler for map to reset highlights and close tooltips when clicking elsewhere
-                    map.on('click', (e) => {
-                        if (!e.defaultPrevented) { // Only if not clicking on a polygon
-                            // Reset all pin highlights
-                            document.querySelectorAll('.map-pin').forEach(pin => {
-                                pin.classList.remove('highlighted');
-                            });
-
-                            highlightPolygon(map, -1); // Pass invalid index to reset all
-
-                            // Close any open tooltips
-                            Object.values(window.tippyInstances || {}).forEach(instance => {
-                                if (instance && instance.hide) {
-                                    instance.hide();
-                                }
-                            });
-                        }
-                    });
-
-                    // Add a button to toggle the legend visibility on mobile
-                    const legendElement = document.querySelector('.map-legend');
+                    // Add map event handlers
+                    addMapEventHandlers();
 
                     // Add responsiveness for the legend
                     function updateLegendPosition() {
@@ -1873,6 +1774,248 @@
                 // Geolocation not supported by the browser
                 alert('თქვენი ბრაუზერი არ უჭერს მხარს გეოლოკაციას');
             }
+        }
+
+        function toggleSatellite() {
+            const button = document.querySelector('.satellite-toggle');
+            button.classList.toggle('active');
+            
+            // Define the map styles
+            const standardStyle = {
+                version: 8,
+                sources: {
+                    'osm': {
+                        type: 'raster',
+                        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                        tileSize: 256,
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }
+                },
+                layers: [{
+                    id: 'osm-tiles',
+                    type: 'raster',
+                    source: 'osm',
+                    minzoom: 0,
+                    maxzoom: 19
+                }]
+            };
+            
+            const satelliteStyle = {
+                version: 8,
+                sources: {
+                    'satellite': {
+                        type: 'raster',
+                        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                        tileSize: 256,
+                        attribution: '&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                    }
+                },
+                layers: [{
+                    id: 'satellite-tiles',
+                    type: 'raster',
+                    source: 'satellite',
+                    minzoom: 0,
+                    maxzoom: 19
+                }]
+            };
+            
+            // Save the current center and zoom
+            const currentCenter = map.getCenter();
+            const currentZoom = map.getZoom();
+            
+            // Toggle between map styles
+            if (button.classList.contains('active')) {
+                map.setStyle(satelliteStyle);
+            } else {
+                map.setStyle(standardStyle);
+            }
+            
+            // After the style is loaded, restore center and zoom and reapply any custom layers
+            map.once('styledata', function() {
+                map.setCenter(currentCenter);
+                map.setZoom(currentZoom);
+                
+                // Re-add data sources and layers if needed
+                if (sampleData.length > 0) {
+                    // Recreate polygon source and layers
+                    const features = updateFeatures(true);
+                    
+                    if (!map.getSource('locations')) {
+                        map.addSource('locations', {
+                            type: 'geojson',
+                            data: {
+                                type: 'FeatureCollection',
+                                features: features
+                            }
+                        });
+                    } else {
+                        map.getSource('locations').setData({
+                            type: 'FeatureCollection',
+                            features: features
+                        });
+                    }
+                    
+                    // Re-add layers if they don't exist
+                    if (!map.getLayer('location-polygons')) {
+                        map.addLayer({
+                            id: 'location-polygons',
+                            type: 'fill',
+                            source: 'locations',
+                            paint: {
+                                'fill-color': ['get', 'fillColor'],
+                                'fill-opacity': 0.6
+                            }
+                        });
+                    }
+                    
+                    if (!map.getLayer('location-polygons-outline')) {
+                        map.addLayer({
+                            id: 'location-polygons-outline',
+                            type: 'line',
+                            source: 'locations',
+                            paint: {
+                                'line-color': ['get', 'strokeColor'],
+                                'line-width': 2
+                            }
+                        });
+                    }
+                    
+                    // Reapply any map event handlers
+                    addMapEventHandlers();
+                }
+            });
+        }
+        
+        // Helper function to add event handlers to the map
+        function addMapEventHandlers() {
+            // Add click event for polygons
+            map.on('click', 'location-polygons', function (e) {
+                e.preventDefault(); // Prevent map click from triggering
+                if (e.features.length > 0) {
+                    const feature = e.features[0];
+                    const id = feature.properties.id;
+                    highlightPolygon(map, id);
+
+                    // Get click position - adjust to match similar positioning as the pins
+                    const clickX = e.point.x;
+                    const clickY = e.point.y - 15; // Position higher to match pin tooltip placement
+
+                    // Create tooltip content with the ID for close button reference
+                    const tooltipContent = document.createElement('div');
+                    tooltipContent.innerHTML = createTooltipHTML(feature, id);
+
+                    // Create marker element to attach tooltip to
+                    let marker = document.getElementById(`marker-${id}`);
+                    if (!marker) {
+                        marker = document.createElement('div');
+                        marker.id = `marker-${id}`;
+                        marker.style.position = 'absolute';
+                        marker.style.top = `${clickY}px`;
+                        marker.style.left = `${clickX}px`;
+                        marker.style.width = '1px';
+                        marker.style.height = '1px';
+                        document.body.appendChild(marker);
+                    } else {
+                        marker.style.top = `${clickY}px`;
+                        marker.style.left = `${clickX}px`;
+                    }
+
+                    // Hide any existing tooltips first to ensure only one is shown at a time
+                    Object.values(window.tippyInstances || {}).forEach(instance => {
+                        if (instance && instance.hide) {
+                            instance.hide();
+                        }
+                    });
+
+                    // Create tippy instance
+                    setTimeout(() => {
+                        // Create new instance on the marker element
+                        window.tippyInstances = window.tippyInstances || {};
+                        window.tippyInstances[id] = tippy(marker, {
+                            content: tooltipContent,
+                            allowHTML: true,
+                            interactive: true,
+                            theme: 'light',
+                            placement: 'top',
+                            trigger: 'manual',
+                            appendTo: document.body,
+                            showOnCreate: true,
+                            hideOnClick: false,
+                            offset: [0, 15],
+                            distance: 15,
+                            arrow: true,
+                            popperOptions: {
+                                strategy: 'fixed',
+                                modifiers: [
+                                    {
+                                        name: 'preventOverflow',
+                                        options: {
+                                            boundary: 'viewport',
+                                        }
+                                    }
+                                ]
+                            },
+                            interactiveBorder: 30,
+                            zIndex: 9999
+                        });
+
+                        // Show the tooltip
+                        if (window.tippyInstances[id] && window.tippyInstances[id].show) {
+                            window.tippyInstances[id].show();
+                        }
+                    }, 0);
+                }
+            });
+
+            // Change cursor on polygon hover
+            map.on('mouseenter', 'location-polygons', function (e) {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            map.on('mouseleave', 'location-polygons', function (e) {
+                map.getCanvas().style.cursor = '';
+            });
+            
+            // Update tooltip positions when map moves
+            map.on('move', function () {
+                // Hide click tooltips
+                Object.values(window.tippyInstances || {}).forEach(instance => {
+                    if (instance && instance.state && instance.state.isVisible) {
+                        instance.hide();
+                    }
+                });
+            });
+            
+            // Update polygon sizes when zoom changes
+            map.on('zoom', function () {
+                // Update features with new polygon sizes, passing current filter state
+                const updatedFeatures = updateFeatures(true);
+
+                // Update the source data
+                map.getSource('locations').setData({
+                    type: 'FeatureCollection',
+                    features: updatedFeatures
+                });
+            });
+
+            // Add click handler for map to reset highlights and close tooltips when clicking elsewhere
+            map.on('click', (e) => {
+                if (!e.defaultPrevented) { // Only if not clicking on a polygon
+                    // Reset all pin highlights
+                    document.querySelectorAll('.map-pin').forEach(pin => {
+                        pin.classList.remove('highlighted');
+                    });
+
+                    highlightPolygon(map, -1); // Pass invalid index to reset all
+
+                    // Close any open tooltips
+                    Object.values(window.tippyInstances || {}).forEach(instance => {
+                        if (instance && instance.hide) {
+                            instance.hide();
+                        }
+                    });
+                }
+            });
         }
     </script>
 </body>
