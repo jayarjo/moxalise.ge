@@ -891,10 +891,30 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
 
         // Wait for the map to load
         map.on('load', function () {
-            // Create markers first and only once
-            const markers = [];
+            // Group markers by location to detect overlapping pins
+            const locationGroups = {};
+            
+            // First group pins by location
             sampleData.forEach((item, index) => {
                 if (item.lat && item.lon && item["ზუსტი ადგილმდებარეობა"]?.trim()) {
+                    const key = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
+                    if (!locationGroups[key]) {
+                        locationGroups[key] = [];
+                    }
+                    locationGroups[key].push({ item, index });
+                }
+            });
+            
+            // Create markers with offsets if needed
+            const markers = [];
+            
+            // Process each location group
+            Object.values(locationGroups).forEach(group => {
+                const isGroup = group.length > 1;
+                
+                // Process each pin in the group
+                group.forEach((entry, groupIndex) => {
+                    const { item, index } = entry;
                     let color;
                     const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
 
@@ -923,11 +943,23 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
                     shadowEl.className = 'map-pin-shadow';
                     el.appendChild(shadowEl);
 
+                    // Only apply offset if we have more than one item at this location
+                    let offsetLon = item.lon;
+                    let offsetLat = item.lat;
+
+                    if (isGroup) {
+                        // Base the offset calculation on the pin marker size
+                        const baseRadius = 0.0006; // Adjust this based on your pin size
+                        const offset = calculatePointOffset(groupIndex, baseRadius);
+                        offsetLon = parseFloat(item.lon) + offset.x;
+                        offsetLat = parseFloat(item.lat) + offset.y;
+                    }
+
                     const marker = new maplibregl.Marker({
                         element: container,
                         anchor: 'bottom',
                         offset: [0, 0] // No offset needed with our new design
-                    }).setLngLat([item.lon, item.lat])
+                    }).setLngLat([offsetLon, offsetLat])
                         .addTo(map);
 
                     // Add direct click handler to the pin (not the container)
@@ -1018,7 +1050,7 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
                         id: index,
                         properties: item
                     });
-                }
+                });
             });
 
             // Store markers globally for later access
