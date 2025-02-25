@@ -51,6 +51,7 @@
             color: #333;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 9999 !important;
         }
         .tippy-content {
             padding: 15px;
@@ -60,6 +61,7 @@
             padding: 5px;
             font-size: 14px;
             position: relative;
+            z-index: 9999;
         }
         .info-card h3 {
             margin-top: 5px;
@@ -464,6 +466,22 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             cursor: pointer;
         }
+
+        .filters {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .filter-select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -471,6 +489,14 @@
     <button class="mobile-sidebar-button" onclick="toggleMobileSidebar()">საჭიროებების სია</button>
     <div id="sidebar">
         <h1 class="sidebar-title">გურიის დიდთოვლობით დაზარალებული მოსახლეობის დახმარება</h1>
+        <div class="filters">
+            <select class="filter-select" id="districtFilter">
+                <option value="">ყველა რაიონი</option>
+            </select>
+            <select class="filter-select" id="villageFilter">
+                <option value="">ყველა სოფელი</option>
+            </select>
+        </div>
         <a href="https://docs.google.com/spreadsheets/d/1cWGBzYPa93_NZq8ZwtqF94fhwIdovrWkPg6-PRNaVHc/edit#gid=0" 
            target="_blank" 
            class="source-link">
@@ -497,6 +523,11 @@
     </div>
 
     <script>
+        // Make map and markers global at the top of script section
+        let map;
+        let sampleData = [];
+        let locationMarkers = [];
+
         // Add this function before other scripts
         function togglePanel() {
             const panel = document.getElementById('bottom-panel');
@@ -656,15 +687,148 @@
             };
         }
 
+        // Add these functions before map initialization
+        function initializeFilters(data) {
+            // Trim whitespace and filter out empty values
+            const districts = [...new Set(data.map(item => item['რაიონი']?.trim()).filter(Boolean))];
+            const villages = [...new Set(data.map(item => item['სოფელი']?.trim()).filter(Boolean))];
+            
+            const districtSelect = document.getElementById('districtFilter');
+            const villageSelect = document.getElementById('villageFilter');
+            
+            // Clear existing options (except the first one)
+            while (districtSelect.options.length > 1) {
+                districtSelect.remove(1);
+            }
+            
+            while (villageSelect.options.length > 1) {
+                villageSelect.remove(1);
+            }
+            
+            districts.sort().forEach(district => {
+                const option = document.createElement('option');
+                option.value = district;
+                option.textContent = district;
+                districtSelect.appendChild(option);
+            });
+            
+            villages.sort().forEach(village => {
+                const option = document.createElement('option');
+                option.value = village;
+                option.textContent = village;
+                villageSelect.appendChild(option);
+            });
+            
+            // Add filter change handlers
+            districtSelect.addEventListener('change', applyFilters);
+            villageSelect.addEventListener('change', applyFilters);
+        }
+
+        // Update applyFilters function with fixed filtering logic
+        function applyFilters() {
+            if (!sampleData.length || !map) return;
+            
+            const selectedDistrict = document.getElementById('districtFilter').value;
+            const selectedVillage = document.getElementById('villageFilter').value;
+            
+            // Filter cards
+            document.querySelectorAll('.card').forEach(card => {
+                const index = card.getAttribute('data-index');
+                const item = sampleData[index];
+                
+                // Trim values before comparison
+                const itemDistrict = item['რაიონი']?.trim() || '';
+                const itemVillage = item['სოფელი']?.trim() || '';
+                
+                const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
+                const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
+                
+                card.style.display = (matchesDistrict && matchesVillage) ? 'block' : 'none';
+            });
+
+            // Update markers visibility
+            locationMarkers.forEach(({marker, properties}) => {
+                // Trim values before comparison
+                const propertyDistrict = properties['რაიონი']?.trim() || '';
+                const propertyVillage = properties['სოფელი']?.trim() || '';
+                
+                const matchesDistrict = !selectedDistrict || propertyDistrict === selectedDistrict;
+                const matchesVillage = !selectedVillage || propertyVillage === selectedVillage;
+                
+                marker.getElement().style.display = (matchesDistrict && matchesVillage) ? 'block' : 'none';
+            });
+
+            // Update polygon features
+            const features = [];
+            sampleData.forEach((item, index) => {
+                if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
+                    // Trim values before comparison
+                    const itemDistrict = item['რაიონი']?.trim() || '';
+                    const itemVillage = item['სოფელი']?.trim() || '';
+                    
+                    const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
+                    const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
+                    
+                    if (matchesDistrict && matchesVillage) {
+                        let color;
+                        const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
+                        
+                        if (status === "მომლოდინე") {
+                            color = '#e74c3c';
+                        } else if (status === "აღმოუჩინეს დახმარება") {
+                            color = '#2ecc71';
+                        } else {
+                            color = '#95a5a6';
+                        }
+
+                        features.push({
+                            type: 'Feature',
+                            properties: {
+                                id: index,
+                                ...item,
+                                fillColor: color,
+                                strokeColor: color
+                            },
+                            geometry: {
+                                type: 'Polygon',
+                                coordinates: [createPolygonCoordinates(map, item.lon, item.lat)]
+                            }
+                        });
+                    }
+                }
+            });
+
+            // Update the source data
+            map.getSource('locations').setData({
+                type: 'FeatureCollection',
+                features: features
+            });
+        }
+
         // Initialize map after data is loaded
         d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyIwzLFtS2150qbKVVti1uVfgDhwID3Ec6NLRrvX4AlABpxneejy1-lgTF/pub?gid=0&single=true&output=csv")
             .then(function(data) {
-                // Process the loaded data
-                const sampleData = data.map(d => ({
-                    ...d,
-                    lat: d.lat ? +d.lat : null,  // Convert to number if exists
-                    lon: d.lon ? +d.lon : null   // Convert to number if exists
-                }));
+                // Store data globally with trimmed string values
+                sampleData = data.map(d => {
+                    // Create a new object with all string values trimmed
+                    const trimmedObj = {};
+                    
+                    // Process each field: trim strings, convert numbers
+                    Object.keys(d).forEach(key => {
+                        if (typeof d[key] === 'string') {
+                            trimmedObj[key] = d[key].trim();
+                        } else {
+                            trimmedObj[key] = d[key];
+                        }
+                    });
+                    
+                    // Add lat/lon as numbers
+                    return {
+                        ...trimmedObj,
+                        lat: trimmedObj.lat ? +trimmedObj.lat : null,  // Convert to number if exists
+                        lon: trimmedObj.lon ? +trimmedObj.lon : null   // Convert to number if exists
+                    };
+                });
 
                 // Calculate bounds of all points
                 const bounds = sampleData.reduce((bounds, item) => {
@@ -733,8 +897,11 @@
                     cardsContainer.appendChild(card);
                 });
 
+                // Initialize filters
+                initializeFilters(sampleData);
+
                 // Initialize the map
-                const map = new maplibregl.Map({
+                map = new maplibregl.Map({
                     container: 'map',
                     style: {
                         version: 8,
@@ -783,12 +950,91 @@
                             const el = document.createElement('div');
                             el.className = 'map-pin';
                             el.style.backgroundColor = color;
+                            el.style.cursor = 'pointer'; // Add cursor style
                             
                             const marker = new maplibregl.Marker({
                                 element: el,
                                 anchor: 'center'
                             }).setLngLat([item.lon, item.lat])
                               .addTo(map);
+                            
+                            // Add direct click handler to the marker
+                            marker.getElement().onclick = function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                highlightPolygon(map, index);
+                                
+                                const rect = this.getBoundingClientRect();
+                                const clickX = rect.left + rect.width/2;
+                                const clickY = rect.top;
+                                
+                                // Create feature-like structure for tooltip
+                                const feature = {
+                                    properties: item
+                                };
+                                
+                                const tooltipContent = document.createElement('div');
+                                tooltipContent.innerHTML = createTooltipHTML(feature, index);
+                                
+                                // Create or update marker element to attach tooltip to
+                                let markerEl = document.getElementById(`marker-${index}`);
+                                if (!markerEl) {
+                                    markerEl = document.createElement('div');
+                                    markerEl.id = `marker-${index}`;
+                                    markerEl.style.position = 'absolute';
+                                    markerEl.style.top = `${clickY}px`;
+                                    markerEl.style.left = `${clickX}px`;
+                                    markerEl.style.width = '1px';
+                                    markerEl.style.height = '1px';
+                                    document.body.appendChild(markerEl);
+                                } else {
+                                    markerEl.style.top = `${clickY}px`;
+                                    markerEl.style.left = `${clickX}px`;
+                                }
+                                
+                                // Hide any existing tooltips
+                                Object.values(window.tippyInstances || {}).forEach(instance => {
+                                    if (instance && instance.hide) {
+                                        instance.hide();
+                                        if (instance.destroy) {
+                                            instance.destroy();
+                                        }
+                                    }
+                                });
+                                
+                                // Create new tooltip instance
+                                window.tippyInstances = window.tippyInstances || {};
+                                window.tippyInstances[index] = tippy(markerEl, {
+                                    content: tooltipContent,
+                                    allowHTML: true,
+                                    interactive: true,
+                                    theme: 'light',
+                                    placement: 'top',
+                                    trigger: 'manual',
+                                    appendTo: document.body,
+                                    showOnCreate: true,
+                                    hideOnClick: false,
+                                    offset: [0, 15],
+                                    distance: 15,
+                                    arrow: true,
+                                    popperOptions: {
+                                        strategy: 'fixed',
+                                        modifiers: [
+                                            {
+                                                name: 'preventOverflow',
+                                                options: {
+                                                    boundary: 'viewport',
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    interactiveBorder: 30,
+                                    zIndex: 9999
+                                });
+                                
+                                window.tippyInstances[index].show();
+                            };
                                 
                             markers.push({
                                 marker,
@@ -799,15 +1045,24 @@
                     });
 
                     // Store markers globally for later access
-                    window.locationMarkers = markers;
+                    locationMarkers = markers;
 
                     // Function to update features based on current zoom
-                    function updateFeatures() {
+                    function updateFeatures(filtered = false) {
                         // Group points by location (only for non-exact locations)
                         const locationGroups = {};
+                        const selectedDistrict = document.getElementById('districtFilter').value;
+                        const selectedVillage = document.getElementById('villageFilter').value;
                         
                         sampleData.forEach((item, index) => {
                             if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
+                                // Apply filters
+                                if (filtered) {
+                                    const matchesDistrict = !selectedDistrict || item['რაიონი'] === selectedDistrict;
+                                    const matchesVillage = !selectedVillage || item['სოფელი'] === selectedVillage;
+                                    if (!matchesDistrict || !matchesVillage) return;
+                                }
+                                
                                 let color;
                                 const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
                                 
@@ -896,7 +1151,7 @@
                     // Make tippyInstances available globally so the close button can access it
                     window.tippyInstances = {};
 
-                    // Add click events to polygons
+                    // Add click event for polygons with improved tooltip behavior
                     map.on('click', 'location-polygons', function(e) {
                         e.preventDefault(); // Prevent map click from triggering
                         if (e.features.length > 0) {
@@ -922,23 +1177,25 @@
                                 marker.style.width = '1px';
                                 marker.style.height = '1px';
                                 document.body.appendChild(marker);
+                            } else {
+                                marker.style.top = `${clickY}px`;
+                                marker.style.left = `${clickX}px`;
                             }
                             
-                            // Hide any existing tooltips first
-                            Object.values(window.tippyInstances).forEach(instance => {
+                            // Hide any existing tooltips first to ensure only one is shown at a time
+                            Object.values(window.tippyInstances || {}).forEach(instance => {
                                 if (instance && instance.hide) {
                                     instance.hide();
+                                    if (instance.destroy) {
+                                        instance.destroy();
+                                    }
                                 }
                             });
                             
                             // Create tippy instance
                             setTimeout(() => {
-                                // Make sure any previous instance is destroyed
-                                if (window.tippyInstances[id] && window.tippyInstances[id].destroy) {
-                                    window.tippyInstances[id].destroy();
-                                }
-                                
                                 // Create new instance on the marker element
+                                window.tippyInstances = window.tippyInstances || {};
                                 window.tippyInstances[id] = tippy(marker, {
                                     content: tooltipContent,
                                     allowHTML: true,
@@ -949,7 +1206,22 @@
                                     appendTo: document.body,
                                     showOnCreate: true,
                                     hideOnClick: false,
-                                    interactiveBorder: 30
+                                    offset: [0, 15],
+                                    distance: 15,
+                                    arrow: true,
+                                    popperOptions: {
+                                        strategy: 'fixed',
+                                        modifiers: [
+                                            {
+                                                name: 'preventOverflow',
+                                                options: {
+                                                    boundary: 'viewport',
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    interactiveBorder: 30,
+                                    zIndex: 9999
                                 });
                                 
                                 // Show the tooltip
@@ -960,76 +1232,19 @@
                         }
                     });
 
-                    // Add click handlers for markers
-                    window.locationMarkers?.forEach(({marker, id, properties}) => {
-                        marker.getElement().addEventListener('click', (e) => {
-                            e.preventDefault();
-                            
-                            highlightPolygon(map, id);
-                            
-                            const rect = marker.getElement().getBoundingClientRect();
-                            const clickX = rect.left + rect.width/2;
-                            const clickY = rect.top;
-                            
-                            const tooltipContent = document.createElement('div');
-                            tooltipContent.innerHTML = createTooltipHTML({properties}, id);
-                            
-                            let markerEl = document.getElementById(`marker-${id}`);
-                            if (!markerEl) {
-                                markerEl = document.createElement('div');
-                                markerEl.id = `marker-${id}`;
-                                markerEl.style.position = 'absolute';
-                                markerEl.style.top = `${clickY}px`;
-                                markerEl.style.left = `${clickX}px`;
-                                markerEl.style.width = '1px';
-                                markerEl.style.height = '1px';
-                                document.body.appendChild(markerEl);
-                            }
-                            
-                            // Hide any existing tooltips
-                            Object.values(window.tippyInstances).forEach(instance => {
-                                if (instance && instance.hide) {
-                                    instance.hide();
-                                }
-                            });
-                            
-                            setTimeout(() => {
-                                if (window.tippyInstances[id]) {
-                                    window.tippyInstances[id].destroy();
-                                }
-                                
-                                window.tippyInstances[id] = tippy(markerEl, {
-                                    content: tooltipContent,
-                                    allowHTML: true,
-                                    interactive: true,
-                                    theme: 'light',
-                                    placement: 'top',
-                                    trigger: 'manual',
-                                    appendTo: document.body,
-                                    showOnCreate: true,
-                                    hideOnClick: false,
-                                    interactiveBorder: 30
-                                });
-                                
-                                if (window.tippyInstances[id].show) {
-                                    window.tippyInstances[id].show();
-                                }
-                            }, 0);
-                        });
-                    });
-
                     // Change cursor on polygon hover
-                    map.on('mouseenter', 'location-polygons', function() {
+                    map.on('mouseenter', 'location-polygons', function(e) {
                         map.getCanvas().style.cursor = 'pointer';
                     });
                     
-                    map.on('mouseleave', 'location-polygons', function() {
+                    map.on('mouseleave', 'location-polygons', function(e) {
                         map.getCanvas().style.cursor = '';
                     });
 
                     // Update tooltip positions when map moves
                     map.on('move', function() {
-                        Object.values(window.tippyInstances).forEach(instance => {
+                        // Hide click tooltips
+                        Object.values(window.tippyInstances || {}).forEach(instance => {
                             if (instance && instance.state && instance.state.isVisible) {
                                 instance.hide();
                             }
@@ -1038,8 +1253,8 @@
                     
                     // Update polygon sizes when zoom changes
                     map.on('zoom', function() {
-                        // Update features with new polygon sizes
-                        const updatedFeatures = updateFeatures();
+                        // Update features with new polygon sizes, passing current filter state
+                        const updatedFeatures = updateFeatures(true);
                         
                         // Update the source data
                         map.getSource('locations').setData({
@@ -1048,10 +1263,17 @@
                         });
                     });
 
-                    // Add click handler for map to reset highlights when clicking elsewhere
+                    // Add click handler for map to reset highlights and close tooltips when clicking elsewhere
                     map.on('click', (e) => {
                         if (!e.defaultPrevented) { // Only if not clicking on a polygon
                             highlightPolygon(map, -1); // Pass invalid index to reset all
+                            
+                            // Close any open tooltips
+                            Object.values(window.tippyInstances || {}).forEach(instance => {
+                                if (instance && instance.hide) {
+                                    instance.hide();
+                                }
+                            });
                         }
                     });
                 });
