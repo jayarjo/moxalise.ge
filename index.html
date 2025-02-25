@@ -554,6 +554,8 @@
 
         // Function to detect if a string is a URL
         function isURL(str) {
+            if(str.includes('https://')) return true;
+            
             if (!str || typeof str !== 'string') return false;
             str = str.trim();
             // Simple regex to match common URL patterns
@@ -1071,16 +1073,21 @@
             }
         }
 
-        // Add tab switching functionality
+        // Replace the old tab switching code with this one
         document.querySelectorAll('.tab-button').forEach(button => {
             button.addEventListener('click', () => {
+                const targetTab = button.dataset.tab;
+                
                 // Remove active class from all buttons and contents
                 document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 
                 // Add active class to clicked button and corresponding content
                 button.classList.add('active');
-                document.getElementById(button.dataset.tab).classList.add('active');
+                const content = document.getElementById(targetTab);
+                if (content) {
+                    content.classList.add('active');
+                }
             });
         });
 
