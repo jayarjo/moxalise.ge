@@ -483,6 +483,16 @@
             z-index: 10; /* Ensure hovered pin is above others */
         }
         
+        .map-pin.highlighted {
+            border: 3px solid black;
+            z-index: 20; /* Ensure highlighted pin is above all others, even hovered ones */
+            transform: rotate(45deg) scale(1.15);
+        }
+        
+        .map-pin.highlighted:hover {
+            transform: rotate(45deg) scale(1.2);
+        }
+        
         .map-pin::after {
             content: '';
             position: absolute;
@@ -807,8 +817,24 @@
                 2     // default width
             ]);
 
+            // Remove highlight from all pins
+            document.querySelectorAll('.map-pin').forEach(pin => {
+                pin.classList.remove('highlighted');
+            });
+
+            // Add highlight to the selected pin if it exists
+            locationMarkers.forEach(marker => {
+                if (marker.id === index) {
+                    const pinElement = marker.marker.getElement().querySelector('.map-pin');
+                    if (pinElement) {
+                        pinElement.classList.add('highlighted');
+                    }
+                }
+            });
+
             // Remove highlight from all cards
             document.querySelectorAll('.card').forEach(c => c.classList.remove('highlighted-card'));
+            
             // Add highlight to selected card
             document.querySelector(`.card[data-index="${index}"]`)?.classList.add('highlighted-card');
         }
@@ -1488,6 +1514,11 @@
                     // Add click handler for map to reset highlights and close tooltips when clicking elsewhere
                     map.on('click', (e) => {
                         if (!e.defaultPrevented) { // Only if not clicking on a polygon
+                            // Reset all pin highlights
+                            document.querySelectorAll('.map-pin').forEach(pin => {
+                                pin.classList.remove('highlighted');
+                            });
+                            
                             highlightPolygon(map, -1); // Pass invalid index to reset all
                             
                             // Close any open tooltips
