@@ -13,19 +13,19 @@ let customDropdowns = {};
 function openHelpModal() {
     const modal = document.getElementById('help-modal');
     const mobileSidebarButton = document.querySelector('.mobile-sidebar-button');
-    
+
     // Hide the mobile sidebar button
     if (mobileSidebarButton) {
         mobileSidebarButton.style.display = 'none';
     }
-    
+
     modal.style.display = 'block';
-    
+
     // Add a small delay before adding the active class for animation
     setTimeout(() => {
         modal.classList.add('active');
     }, 10);
-    
+
     // Prevent scrolling of the background content
     document.body.style.overflow = 'hidden';
 }
@@ -33,16 +33,16 @@ function openHelpModal() {
 function closeHelpModal() {
     const modal = document.getElementById('help-modal');
     const mobileSidebarButton = document.querySelector('.mobile-sidebar-button');
-    
+
     modal.classList.remove('active');
-    
+
     // Add a small delay before hiding the modal completely for animation
     setTimeout(() => {
         modal.style.display = 'none';
-        
+
         // Re-enable scrolling
         document.body.style.overflow = '';
-        
+
         // Show the mobile sidebar button again
         if (mobileSidebarButton) {
             mobileSidebarButton.style.display = '';
@@ -51,10 +51,15 @@ function closeHelpModal() {
 }
 
 // Close modal if user clicks outside the modal content
-window.addEventListener('click', function(event) {
-    const modal = document.getElementById('help-modal');
-    if (event.target === modal) {
+window.addEventListener('click', function (event) {
+    const helpModal = document.getElementById('help-modal');
+    if (event.target === helpModal) {
         closeHelpModal();
+    }
+
+    const notificationModal = document.getElementById('notification-modal');
+    if (event.target === notificationModal) {
+        closeNotificationModal();
     }
 });
 
@@ -63,108 +68,108 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange)
     // Get the original select element
     const originalSelect = document.getElementById(elementId);
     if (!originalSelect) return null;
-    
+
     // Get parent container
     const parentContainer = originalSelect.parentNode;
-    
+
     // Hide the original select element
     originalSelect.style.display = 'none';
-    
+
     // Create custom dropdown container
     const dropdownContainer = document.createElement('div');
     dropdownContainer.className = 'custom-dropdown';
     dropdownContainer.setAttribute('data-for', elementId);
-    
+
     // Create header
     const header = document.createElement('div');
     header.className = 'custom-dropdown-header';
-    
+
     const selectedText = document.createElement('span');
     selectedText.className = 'custom-dropdown-selected';
     selectedText.textContent = placeholder;
-    
+
     const icon = document.createElement('span');
     icon.className = 'custom-dropdown-icon';
     icon.textContent = '▼';
-    
+
     header.appendChild(selectedText);
     header.appendChild(icon);
-    
+
     // Create dropdown menu
     const menu = document.createElement('div');
     menu.className = 'custom-dropdown-menu';
-    
+
     // Calculate the maximum count for scaling the distribution bars
     const maxCount = Math.max(...Object.values(counts));
-    
+
     // Add "All" option at the top
     const allItem = document.createElement('div');
     allItem.className = 'custom-dropdown-item selected';
     allItem.setAttribute('data-value', '');
-    
+
     const allLabel = document.createElement('span');
     allLabel.className = 'custom-dropdown-item-label';
     allLabel.textContent = placeholder;
-    
+
     const allCount = document.createElement('span');
     allCount.className = 'custom-dropdown-item-count';
     allCount.textContent = `${Object.values(counts).reduce((a, b) => a + b, 0)}`;
-    
+
     const allDistribution = document.createElement('div');
     allDistribution.className = 'custom-dropdown-distribution';
-    
+
     const allBar = document.createElement('div');
     allBar.className = 'custom-dropdown-distribution-bar';
     allBar.style.width = '100%';
-    
+
     allDistribution.appendChild(allBar);
     allItem.appendChild(allLabel);
     allItem.appendChild(allCount);
     allItem.appendChild(allDistribution);
     menu.appendChild(allItem);
-    
+
     // Add other options
     options.forEach(option => {
         const count = counts[option] || 0;
         const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
-        
+
         const item = document.createElement('div');
         item.className = 'custom-dropdown-item';
         item.setAttribute('data-value', option);
-        
+
         const label = document.createElement('span');
         label.className = 'custom-dropdown-item-label';
         label.textContent = option;
-        
+
         const countSpan = document.createElement('span');
         countSpan.className = 'custom-dropdown-item-count';
         countSpan.textContent = count;
-        
+
         const distribution = document.createElement('div');
         distribution.className = 'custom-dropdown-distribution';
-        
+
         const bar = document.createElement('div');
         bar.className = 'custom-dropdown-distribution-bar';
         bar.style.width = `${percentage}%`;
-        
+
         distribution.appendChild(bar);
         item.appendChild(label);
         item.appendChild(countSpan);
         item.appendChild(distribution);
         menu.appendChild(item);
     });
-    
+
     // Add components to container
     dropdownContainer.appendChild(header);
     dropdownContainer.appendChild(menu);
-    
+
     // Insert the custom dropdown after the original select
     parentContainer.insertBefore(dropdownContainer, originalSelect.nextSibling);
-    
+
     // Add event listeners
     header.addEventListener('click', () => {
         dropdownContainer.classList.toggle('open');
-        
+
         // Close other dropdowns
         document.querySelectorAll('.custom-dropdown.open').forEach(dropdown => {
             if (dropdown !== dropdownContainer) {
@@ -172,41 +177,41 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange)
             }
         });
     });
-    
+
     // Handle clicking outside the dropdown
     document.addEventListener('click', (e) => {
         if (!dropdownContainer.contains(e.target)) {
             dropdownContainer.classList.remove('open');
         }
     });
-    
+
     // Handle item selection
     menu.querySelectorAll('.custom-dropdown-item').forEach(item => {
         item.addEventListener('click', () => {
             const value = item.getAttribute('data-value');
             selectedText.textContent = value || placeholder;
-            
+
             // Update original select value
             originalSelect.value = value;
-            
+
             // Update selected item styling
             menu.querySelectorAll('.custom-dropdown-item').forEach(i => {
                 i.classList.remove('selected');
             });
             item.classList.add('selected');
-            
+
             // Close dropdown
             dropdownContainer.classList.remove('open');
-            
+
             // Trigger change event on original select
             const event = new Event('change');
             originalSelect.dispatchEvent(event);
-            
+
             // Call onChange callback
             if (onChange) onChange(value);
         });
     });
-    
+
     return {
         container: dropdownContainer,
         setValue: (value) => {
@@ -265,10 +270,10 @@ function updateFeatures(filtered = false) {
                 const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
 
                 // Special handling for empty status
-                const matchesStatus = !selectedStatus || 
-                    (selectedStatus === "EMPTY_STATUS" && itemStatus === '') || 
+                const matchesStatus = !selectedStatus ||
+                    (selectedStatus === "EMPTY_STATUS" && itemStatus === '') ||
                     itemStatus === selectedStatus;
-                    
+
                 const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
                 const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
                 const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
@@ -418,6 +423,12 @@ function createTooltipHTML(feature, instanceId) {
     let html = `<div class="info-card">
                 <button class="close-button" onclick="closeTooltip('${instanceId}')">✕</button>`;
 
+    // Add ID at the top of the tooltip using the CSS classes
+    html += `<p class="id-field">
+                <span class="id-label">ID:</span> 
+                <span class="id-value">${data.id || ''}</span>
+            </p>`;
+
     // Get all keys except internal ones
     const keys = Object.keys(data).filter(key =>
         !['id', 'fillColor', 'strokeColor', 'lat', 'lon'].includes(key)
@@ -450,7 +461,10 @@ function createTooltipHTML(feature, instanceId) {
     // Add directions link if lat and lon are available
     if (data.lat && data.lon) {
         const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${data.lat},${data.lon}`;
-        html += `<p class="directions-link"><a href="${directionsUrl}" style='font-size: 18px;' target="_blank">მიმართულება / direction</a></p>`;
+        html += `<div class="directions-container">
+            <a href="${directionsUrl}" target="_blank">ნავიგაცია</a>
+            ${data.id ? `<button id="notification-btn-${instanceId}" onclick="sendNotification('notification-btn-${instanceId}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>დაზარალებულის დახმარება</button>` : ''}
+        </div>`;
     }
 
     html += `</div>`;
@@ -630,7 +644,7 @@ function initializeFilters(data) {
     const districtCounts = countFieldValues(data, 'რაიონი');
     const villageCounts = countFieldValues(data, 'სოფელი');
     const priorityCounts = countFieldValues(data, 'პრიორიტეტი');
-    
+
     // Special handling for status counts including empty status
     const statusCounts = {};
     data.forEach(item => {
@@ -645,30 +659,30 @@ function initializeFilters(data) {
 
     // Create custom dropdowns
     customDropdowns.district = createCustomDropdown(
-        'districtFilter', 
-        districts, 
-        districtCounts, 
+        'districtFilter',
+        districts,
+        districtCounts,
         'ყველა რაიონი'
     );
-    
+
     customDropdowns.village = createCustomDropdown(
-        'villageFilter', 
-        villages, 
-        villageCounts, 
+        'villageFilter',
+        villages,
+        villageCounts,
         'ყველა სოფელი'
     );
-    
+
     customDropdowns.priority = createCustomDropdown(
-        'priorityFilter', 
-        priorities, 
-        priorityCounts, 
+        'priorityFilter',
+        priorities,
+        priorityCounts,
         'ყველა პრიორიტეტი'
     );
-    
+
     customDropdowns.status = createCustomDropdown(
-        'statusFilter', 
-        [...statuses, 'უცნობი სტატუსი'], 
-        {...statusCounts, 'უცნობი სტატუსი': statusCounts['EMPTY_STATUS'] || 0}, 
+        'statusFilter',
+        [...statuses, 'უცნობი სტატუსი'],
+        { ...statusCounts, 'უცნობი სტატუსი': statusCounts['EMPTY_STATUS'] || 0 },
         'ყველა სტატუსი'
     );
 
@@ -700,10 +714,10 @@ function applyFilters() {
         const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
 
         // Special handling for empty status
-        const matchesStatus = !selectedStatus || 
-            (selectedStatus === "EMPTY_STATUS" && itemStatus === '') || 
+        const matchesStatus = !selectedStatus ||
+            (selectedStatus === "EMPTY_STATUS" && itemStatus === '') ||
             itemStatus === selectedStatus;
-            
+
         const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
         const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
         const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
@@ -720,10 +734,10 @@ function applyFilters() {
         const propertyStatus = properties["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
 
         // Special handling for empty status
-        const matchesStatus = !selectedStatus || 
-            (selectedStatus === "EMPTY_STATUS" && propertyStatus === '') || 
+        const matchesStatus = !selectedStatus ||
+            (selectedStatus === "EMPTY_STATUS" && propertyStatus === '') ||
             propertyStatus === selectedStatus;
-            
+
         const matchesDistrict = !selectedDistrict || propertyDistrict === selectedDistrict;
         const matchesVillage = !selectedVillage || propertyVillage === selectedVillage;
         const matchesPriority = !selectedPriority || propertyPriority === selectedPriority;
@@ -742,10 +756,10 @@ function applyFilters() {
             const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
 
             // Special handling for empty status
-            const matchesStatus = !selectedStatus || 
-                (selectedStatus === "EMPTY_STATUS" && itemStatus === '') || 
+            const matchesStatus = !selectedStatus ||
+                (selectedStatus === "EMPTY_STATUS" && itemStatus === '') ||
                 itemStatus === selectedStatus;
-                
+
             const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
             const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
             const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
@@ -873,15 +887,30 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
                             <span class="expand-icon">▼</span>
                         </div>
                         <div class="card-content">
+                            <p class="id-field">
+                                <span class="id-label">ID:</span> <span class="id-value">${item.id || ''}</span>
+                            </p>
                             ${keys.slice(1).map(key => `
                                 <p><strong>${key}:</strong> ${formatValue(item[key])}</p>
                             `).join('')}
+                            ${item.lat && item.lon ? `
+                            <div class="card-actions">
+                                ${item.id ? `<button id="card-notification-btn-${index}" onclick="event.stopPropagation(); sendNotification('card-notification-btn-${index}')" class="card-notification-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>დაზარალებულის დახმარება</button>` : ''}
+                            </div>
+                            ` : ''}
                         </div>`;
 
             card.innerHTML = cardContent;
 
             // Add click handlers
             card.addEventListener('click', (e) => {
+                // Check if clicking inside card-content or on a button/link
+                if (e.target.closest('.card-content') &&
+                    !e.target.matches('.card-content')) {
+                    // Clicked inside card content but not on the container itself
+                    return;
+                }
+
                 // Toggle expansion
                 card.classList.toggle('expanded');
 
@@ -918,7 +947,7 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
         map.on('load', function () {
             // Group markers by location to detect overlapping pins
             const locationGroups = {};
-            
+
             // First group pins by location
             sampleData.forEach((item, index) => {
                 if (item.lat && item.lon && item["ზუსტი ადგილმდებარეობა"]?.trim()) {
@@ -929,14 +958,14 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
                     locationGroups[key].push({ item, index });
                 }
             });
-            
+
             // Create markers with offsets if needed
             const markers = [];
-            
+
             // Process each location group
             Object.values(locationGroups).forEach(group => {
                 const isGroup = group.length > 1;
-                
+
                 // Process each pin in the group
                 group.forEach((entry, groupIndex) => {
                     const { item, index } = entry;
@@ -1260,7 +1289,7 @@ function showMyLocation() {
 function toggleSatellite() {
     const button = document.querySelector('.satellite-toggle');
     button.classList.toggle('active');
-    
+
     // Close any open tooltips before changing the map style
     if (window.tippyInstances) {
         Object.values(window.tippyInstances).forEach(instance => {
@@ -1507,3 +1536,280 @@ function addMapEventHandlers() {
         }
     });
 }
+
+// Functions for notification modal
+function openNotificationModal(btnId) {
+    const modal = document.getElementById('notification-modal');
+    if (!modal) {
+        console.error('Notification modal not found in openNotificationModal');
+        return;
+    }
+    
+    const mobileSidebarButton = document.querySelector('.mobile-sidebar-button');
+
+    // Store the button ID in a data attribute for later use
+    modal.setAttribute('data-button-id', btnId);
+
+    // Check if the form exists or has been replaced with success message
+    const form = document.getElementById('notification-form');
+    if (!form || form.querySelector('.success-message')) {
+        // Recreate the form if it doesn't exist or contains success message
+        const modalBody = modal.querySelector('.modal-body') || modal;
+        modalBody.innerHTML = `
+            <form id="notification-form">
+                <div class="form-group">
+                    <label for="volunteer-name">მოხალისის სახელი</label>
+                    <input type="text" id="volunteer-name" name="volunteer-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone-number">ტელეფონის ნომერი</label>
+                    <input type="tel" id="phone-number" name="phone-number" required>
+                </div>
+                <div class="form-group">
+                    <label for="notification-message">შეტყობინება</label>
+                    <textarea id="notification-message" name="notification-message" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">გაგზავნა</button>
+            </form>
+        `;
+        
+        // Re-attach the submit event listener to the new form
+        const newForm = document.getElementById('notification-form');
+        if (newForm) {
+            newForm.addEventListener('submit', submitNotification);
+        }
+    } else {
+        // Reset form fields with null checks
+        const volunteerNameField = document.getElementById('volunteer-name');
+        const phoneNumberField = document.getElementById('phone-number');
+        const messageField = document.getElementById('notification-message');
+        
+        if (volunteerNameField) volunteerNameField.value = '';
+        if (phoneNumberField) phoneNumberField.value = '';
+        if (messageField) messageField.value = '';
+    }
+
+    // Hide the mobile sidebar button
+    if (mobileSidebarButton) {
+        mobileSidebarButton.style.display = 'none';
+    }
+
+    modal.style.display = 'block';
+
+    // Add a small delay before adding the active class for animation
+    setTimeout(() => {
+        modal.classList.add('active');
+    }, 10);
+
+    // Prevent scrolling of the background content
+    document.body.style.overflow = 'hidden';
+}
+
+function closeNotificationModal() {
+    const modal = document.getElementById('notification-modal');
+    if (!modal) {
+        console.error('Notification modal not found in closeNotificationModal');
+        return;
+    }
+    
+    const mobileSidebarButton = document.querySelector('.mobile-sidebar-button');
+
+    modal.classList.remove('active');
+
+    // Add a small delay before hiding the modal completely for animation
+    setTimeout(() => {
+        modal.style.display = 'none';
+
+        // Re-enable scrolling
+        document.body.style.overflow = '';
+
+        // Show the mobile sidebar button again
+        if (mobileSidebarButton) {
+            mobileSidebarButton.style.display = '';
+        }
+    }, 300);
+}
+
+// Function to send notification to specified API
+function sendNotification(btnId) {
+    // Check if notification modal exists
+    const modal = document.getElementById('notification-modal');
+    if (!modal) {
+        console.error('Notification modal not found');
+        alert('შეტყობინების გაგზავნა ვერ მოხერხდა. გთხოვთ სცადოთ თავიდან.');
+        return;
+    }
+    
+    // Open the notification modal instead of directly sending the notification
+    openNotificationModal(btnId);
+}
+
+// Function to submit the notification form
+function submitNotification(event) {
+    event.preventDefault();
+
+    // Get form fields with null checks
+    const volunteerNameField = document.getElementById('volunteer-name');
+    const phoneNumberField = document.getElementById('phone-number');
+    const messageField = document.getElementById('notification-message');
+    
+    // If any field is missing, show an error and return
+    if (!volunteerNameField || !phoneNumberField || !messageField) {
+        alert('ფორმის ელემენტები ვერ მოიძებნა. გთხოვთ სცადოთ თავიდან.');
+        return;
+    }
+    
+    // Get form values
+    const volunteerName = volunteerNameField.value.trim();
+    const phoneNumber = phoneNumberField.value.trim();
+    const message = messageField.value.trim();
+
+    // Validate inputs
+    if (!volunteerName || !phoneNumber || !message) {
+        alert('გთხოვთ შეავსოთ ყველა ველი');
+        return;
+    }
+
+    // Get the button ID from the modal's data attribute
+    const modal = document.getElementById('notification-modal');
+    if (!modal) {
+        alert('მოდალი ვერ მოიძებნა. გთხოვთ სცადოთ თავიდან.');
+        return;
+    }
+    
+    const btnId = modal.getAttribute('data-button-id');
+    if (!btnId) {
+        alert('ღილაკის ID ვერ მოიძებნა. გთხოვთ სცადოთ თავიდან.');
+        return;
+    }
+
+    // Extract the instance ID from the button ID
+    let instanceId;
+    
+    // Handle both types of button IDs
+    if (btnId.startsWith('card-notification-btn-')) {
+        instanceId = btnId.replace('card-notification-btn-', '');
+    } else if (btnId.startsWith('notification-btn-')) {
+        instanceId = btnId.replace('notification-btn-', '');
+    } else {
+        instanceId = btnId; // Fallback
+    }
+
+    // Find the data for this instance
+    let itemData = null;
+    if (sampleData[instanceId]) {
+        itemData = sampleData[instanceId];
+    }
+
+    let append = '';
+    // Use the actual ID from the data if available
+    const data = {
+        "id": append + (itemData && itemData.id ? itemData.id : "a15522"), // Fallback to sample ID if not found
+        "category": "ვაპირებ",
+        "message": volunteerName + ": " + message,
+        "phone": phoneNumber
+    };
+
+    // API endpoint
+    const apiUrl = 'https://sift.app.n8n.cloud/webhook/9fe92c0c-3ebe-4c4f-9fc4-3bec9e39aa4f';
+
+    // Show loading state on the submit button
+    const submitButton = document.querySelector('.submit-btn');
+    let originalText = 'გაგზავნა'; // Default text
+    if (!submitButton) {
+        // If we can't find the button, just proceed with the request
+        console.warn('Submit button not found');
+    } else {
+        originalText = submitButton.textContent;
+        submitButton.textContent = 'იგზავნება...';
+        submitButton.disabled = true;
+    }
+
+    // Disable all form inputs during submission
+    const formInputs = document.querySelectorAll('#notification-form input, #notification-form textarea');
+    if (formInputs && formInputs.length > 0) {
+        formInputs.forEach(input => {
+            input.disabled = true;
+        });
+    }
+
+    // Send the POST request
+    fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+
+        // Simplified success check - directly check the status code
+        if (response.status === 200 || response.status === 201) {
+            // Show success message in the modal
+            const form = document.getElementById('notification-form');
+            if (form) {
+                form.innerHTML = `
+                    <div class="success-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <h3>შეტყობინება წარმატებით გაიგზავნა!</h3>
+                        <p>გმადლობთ, თქვენი შეტყობინება მიღებულია.</p>
+                        <button type="button" class="submit-btn" onclick="closeNotificationModal()">დახურვა</button>
+                    </div>
+                `;
+            }
+            
+            // Update the original button
+            const button = document.getElementById(btnId);
+            if (button) {
+                button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> გაიგზავნა`;
+                button.style.backgroundColor = '#2ecc71';
+            }
+            
+            console.log('Notification sent successfully with status:', response.status);
+
+            // Try to parse JSON if available, but don't make success dependent on it
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                return response.json().then(data => {
+                    console.log('Response data:', data);
+                }).catch(err => {
+                    console.log('Could not parse JSON but request was successful');
+                });
+            }
+        } else {
+            // Non-success status code
+            throw new Error(`Request failed with status code ${response.status}`);
+        }
+    })
+    .catch(error => {
+        // Reset form inputs
+        if (formInputs && formInputs.length > 0) {
+            formInputs.forEach(input => {
+                input.disabled = false;
+            });
+        }
+        
+        // Reset button and show error
+        if (submitButton) {
+            submitButton.textContent = originalText || 'გაგზავნა';
+            submitButton.disabled = false;
+        }
+        
+        // Show error message
+        alert('შეცდომა შეტყობინების გაგზავნისას. გთხოვთ სცადოთ თავიდან.');
+        
+        console.error('Error sending notification:', error);
+    });
+}
+
+// Add event listener for form submission when the DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    const notificationForm = document.getElementById('notification-form');
+    if (notificationForm) {
+        notificationForm.addEventListener('submit', submitNotification);
+    }
+});
