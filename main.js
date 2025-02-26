@@ -9,6 +9,9 @@ let userLocationMarker = null;
 // Add global variables to track custom dropdowns
 let customDropdowns = {};
 
+// Add a global variable to store the current search text
+let currentSearchText = '';
+
 // Functions for modal help request
 function openHelpModal() {
     const modal = document.getElementById('help-modal');
@@ -721,7 +724,7 @@ function initializeFilters(data) {
     statusSelect.addEventListener('change', applyFilters);
 }
 
-// Update applyFilters function with fixed filtering logic
+// Update applyFilters function with search functionality
 function applyFilters() {
     if (!sampleData.length || !map) return;
 
@@ -729,6 +732,7 @@ function applyFilters() {
     const selectedVillage = document.getElementById('villageFilter').value;
     const selectedPriority = document.getElementById('priorityFilter').value;
     const selectedStatus = document.getElementById('statusFilter').value;
+    const searchText = currentSearchText.toLowerCase().trim();
 
     // Filter cards
     document.querySelectorAll('.card').forEach(card => {
@@ -750,7 +754,13 @@ function applyFilters() {
         const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
         const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
 
-        card.style.display = (matchesDistrict && matchesVillage && matchesPriority && matchesStatus) ? 'block' : 'none';
+        // Check if the item matches the search text
+        const matchesSearch = !searchText || Object.values(item).some(value => {
+            if (value === null || value === undefined) return false;
+            return String(value).toLowerCase().includes(searchText);
+        });
+
+        card.style.display = (matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch) ? 'block' : 'none';
     });
 
     // Update markers visibility
@@ -770,7 +780,13 @@ function applyFilters() {
         const matchesVillage = !selectedVillage || propertyVillage === selectedVillage;
         const matchesPriority = !selectedPriority || propertyPriority === selectedPriority;
 
-        marker.getElement().style.display = (matchesDistrict && matchesVillage && matchesPriority && matchesStatus) ? 'block' : 'none';
+        // Check if the properties match the search text
+        const matchesSearch = !searchText || Object.values(properties).some(value => {
+            if (value === null || value === undefined) return false;
+            return String(value).toLowerCase().includes(searchText);
+        });
+
+        marker.getElement().style.display = (matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch) ? 'block' : 'none';
     });
 
     // Update polygon features
@@ -792,7 +808,13 @@ function applyFilters() {
             const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
             const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
 
-            if (matchesDistrict && matchesVillage && matchesPriority && matchesStatus) {
+            // Check if the item matches the search text
+            const matchesSearch = !searchText || Object.values(item).some(value => {
+                if (value === null || value === undefined) return false;
+                return String(value).toLowerCase().includes(searchText);
+            });
+
+            if (matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch) {
                 let color;
                 const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
                 const priority = item["პრიორიტეტი"]?.trim();
@@ -1955,4 +1977,48 @@ document.addEventListener('DOMContentLoaded', function() {
     if (notificationForm) {
         notificationForm.addEventListener('submit', submitNotification);
     }
+    
+    // Initialize search functionality
+    initializeSearch();
 });
+
+// Function to initialize search functionality
+function initializeSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const clearButton = document.getElementById('clearSearch');
+
+    if (!searchInput || !clearButton) return;
+
+    // Add event listener for input changes
+    searchInput.addEventListener('input', function() {
+        const searchText = this.value.trim();
+        currentSearchText = searchText;
+        
+        // Show/hide clear button based on search text
+        clearButton.style.display = searchText ? 'block' : 'none';
+        
+        // Apply filters with the new search text
+        applyFilters();
+    });
+
+    // Add event listener for clear button
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';
+        currentSearchText = '';
+        this.style.display = 'none';
+        
+        // Apply filters with empty search text
+        applyFilters();
+        
+        // Focus the search input after clearing
+        searchInput.focus();
+    });
+
+    // Add event listener for Enter key
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applyFilters();
+        }
+    });
+}

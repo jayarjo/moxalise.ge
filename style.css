@@ -11,6 +11,52 @@ body {
     width: 100%;
 }
 
+/* Search container styles */
+.search-container {
+    position: relative;
+    margin: 10px 15px;
+    width: calc(100% - 30px);
+}
+
+.search-input {
+    width: calc(100% - 37px);
+    padding: 10px 35px 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 14px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.clear-search-button {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.clear-search-button:hover {
+    color: #e74c3c;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
 .maplibregl-popup {
     max-width: 300px;
 }
