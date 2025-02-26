@@ -191,6 +191,11 @@ a:hover {
     /* Red for pending (მომლოდინე) */
 }
 
+.card.priority {
+    border-left: 4px solid #000000;
+    /* Black for priority items */
+}
+
 .card.completed {
     border-left: 4px solid #2ecc71;
     /* Green for completed (აღმოუჩინეს დახმარება) */

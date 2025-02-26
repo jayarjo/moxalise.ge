@@ -286,10 +286,14 @@ function updateFeatures(filtered = false) {
 
             let color;
             const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
+            const priority = item["პრიორიტეტი"]?.trim();
 
-            if (status === "მომლოდინე") {
+            // Check if priority is filled and status is not "აღმოუჩინეს დახმარება"
+            if (priority && status !== "აღმოუჩინეს დახმარება") {
+                color = '#000000'; // Black for priority items not completed
+            } else if (status === "მომლოდინე") {
                 color = '#e74c3c'; // Red
-            } else if (status === "აღმოუჩინეს დახმარება") {
+            } else if (status === "აღმოუჩინეს დახმარება" || status === "აღმოუჩინეს დახმარება") {
                 color = '#2ecc71'; // Green
             } else if (status === "მიდის მოხალისე") {
                 color = '#3498db'; // Blue
@@ -485,7 +489,7 @@ function createTooltipHTML(feature, instanceId) {
         const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${data.lat},${data.lon}`;
         html += `<div class="directions-container">
             <a href="${directionsUrl}" target="_blank">ნავიგაცია</a>
-            ${data.id ? `<button id="notification-btn-${instanceId}" onclick="sendNotification('notification-btn-${instanceId}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>დაზარალებულის დახმარება</button>` : ''}
+            ${data.id ? `<button id="notification-btn-${instanceId}" onclick="sendNotification('notification-btn-${instanceId}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>დაზარალებულის დახმარება/განახლება</button>` : ''}
         </div>`;
     }
 
@@ -791,10 +795,14 @@ function applyFilters() {
             if (matchesDistrict && matchesVillage && matchesPriority && matchesStatus) {
                 let color;
                 const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
+                const priority = item["პრიორიტეტი"]?.trim();
 
-                if (status === "მომლოდინე") {
+                // Check if priority is filled and status is not "აღმოუჩინეს დახმარება"
+                if (priority && status !== "აღმოუჩინეს დახმარება") {
+                    color = '#000000'; // Black for priority items not completed
+                } else if (status === "მომლოდინე") {
                     color = '#e74c3c'; // Red
-                } else if (status === "აღმოუჩინეს დახმარება") {
+                } else if (status === "აღმოუჩინეს დახმარება" || status === "აღმოუჩინეს დახმარება") {
                     color = '#2ecc71'; // Green
                 } else if (status === "მიდის მოხალისე") {
                     color = '#3498db'; // Blue
@@ -893,9 +901,14 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
             // Determine status class
             let statusClass = 'empty-status';
             const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
-            if (status === "მომლოდინე") {
+            const priority = item["პრიორიტეტი"]?.trim();
+            
+            // Check for priority first
+            if (priority && status !== "აღმოუჩინეს დახმარება") {
+                statusClass = 'priority';
+            } else if (status === "მომლოდინე") {
                 statusClass = 'pending';
-            } else if (status === "აღმოუჩინეს დახმარება") {
+            } else if (status === "აღმოუჩინეს დახმარება" || status === "აღმოუჩინეს დახმარება") {
                 statusClass = 'completed';
             } else if (status === "მიდის მოხალისე") {
                 statusClass = 'volunteer-going';
@@ -929,7 +942,7 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
                             `).join('')}
                             ${item.lat && item.lon ? `
                             <div class="card-actions">
-                                ${item.id ? `<button id="card-notification-btn-${index}" onclick="event.stopPropagation(); sendNotification('card-notification-btn-${index}')" class="card-notification-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>დაზარალებულის დახმარება</button>` : ''}
+                                ${item.id ? `<button id="card-notification-btn-${index}" onclick="event.stopPropagation(); sendNotification('card-notification-btn-${index}')" class="card-notification-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>დაზარალებულის დახმარება/განახლება</button>` : ''}
                             </div>
                             ` : ''}
                         </div>`;
@@ -1005,10 +1018,14 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
                     const { item, index } = entry;
                     let color;
                     const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
+                    const priority = item["პრიორიტეტი"]?.trim();
 
-                    if (status === "მომლოდინე") {
+                    // Check if priority is filled and status is not "აღმოუჩინეს დახმარება"
+                    if (priority && status !== "აღმოუჩინეს დახმარება") {
+                        color = '#000000'; // Black for priority items not completed
+                    } else if (status === "მომლოდინე") {
                         color = '#e74c3c';  // Red
-                    } else if (status === "აღმოუჩინეს დახმარება") {
+                    } else if (status === "აღმოუჩინეს დახმარება" || status === "აღმოუჩინეს დახმარება") {
                         color = '#2ecc71';  // Green
                     } else if (status === "მიდის მოხალისე") {
                         color = '#3498db';  // Blue
