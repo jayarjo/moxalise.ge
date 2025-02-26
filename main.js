@@ -64,7 +64,7 @@ window.addEventListener('click', function (event) {
 });
 
 // Function to create a custom dropdown with distribution data
-function createCustomDropdown(elementId, options, counts, placeholder, onChange) {
+function createCustomDropdown(elementId, options, counts, placeholder, onChange, specialMapping) {
     // Get the original select element
     const originalSelect = document.getElementById(elementId);
     if (!originalSelect) return null;
@@ -188,11 +188,14 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange)
     // Handle item selection
     menu.querySelectorAll('.custom-dropdown-item').forEach(item => {
         item.addEventListener('click', () => {
-            const value = item.getAttribute('data-value');
-            selectedText.textContent = value || placeholder;
+            const displayValue = item.getAttribute('data-value');
+            selectedText.textContent = displayValue || placeholder;
 
+            // Use special mapping if provided, otherwise use the display value
+            const actualValue = (specialMapping && displayValue && specialMapping[displayValue]) || displayValue;
+            
             // Update original select value
-            originalSelect.value = value;
+            originalSelect.value = actualValue;
 
             // Update selected item styling
             menu.querySelectorAll('.custom-dropdown-item').forEach(i => {
@@ -208,7 +211,7 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange)
             originalSelect.dispatchEvent(event);
 
             // Call onChange callback
-            if (onChange) onChange(value);
+            if (onChange) onChange(actualValue);
         });
     });
 
@@ -285,11 +288,15 @@ function updateFeatures(filtered = false) {
             const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
 
             if (status === "მომლოდინე") {
-                color = '#e74c3c';
+                color = '#e74c3c'; // Red
             } else if (status === "აღმოუჩინეს დახმარება") {
-                color = '#2ecc71';
+                color = '#2ecc71'; // Green
+            } else if (status === "მიდის მოხალისე") {
+                color = '#3498db'; // Blue
+            } else if (status === "მოინახულა მოხალისემ") {
+                color = '#9b59b6'; // Purple
             } else {
-                color = '#95a5a6';
+                color = '#95a5a6'; // Gray for unknown/empty status
             }
 
             const key = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
@@ -698,7 +705,9 @@ function initializeFilters(data) {
         'statusFilter',
         [...statuses, 'უცნობი სტატუსი'],
         { ...statusCounts, 'უცნობი სტატუსი': statusCounts['EMPTY_STATUS'] || 0 },
-        'ყველა სტატუსი'
+        'ყველა სტატუსი',
+        null,
+        { 'უცნობი სტატუსი': 'EMPTY_STATUS' } // Add special value mapping
     );
 
     // Add filter change handlers to the native selects (already connected via createCustomDropdown)
@@ -784,11 +793,15 @@ function applyFilters() {
                 const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
 
                 if (status === "მომლოდინე") {
-                    color = '#e74c3c';
+                    color = '#e74c3c'; // Red
                 } else if (status === "აღმოუჩინეს დახმარება") {
-                    color = '#2ecc71';
+                    color = '#2ecc71'; // Green
+                } else if (status === "მიდის მოხალისე") {
+                    color = '#3498db'; // Blue
+                } else if (status === "მოინახულა მოხალისემ") {
+                    color = '#9b59b6'; // Purple
                 } else {
-                    color = '#95a5a6';
+                    color = '#95a5a6'; // Gray for unknown/empty status
                 }
 
                 features.push({
@@ -884,6 +897,12 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
                 statusClass = 'pending';
             } else if (status === "აღმოუჩინეს დახმარება") {
                 statusClass = 'completed';
+            } else if (status === "მიდის მოხალისე") {
+                statusClass = 'volunteer-going';
+            } else if (status === "მოინახულა მოხალისემ") {
+                statusClass = 'volunteer-visited';
+            } else if (!status || status.trim() === '') {
+                statusClass = 'empty-status';
             }
 
             card.className = `card ${statusClass}`;
@@ -991,6 +1010,10 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
                         color = '#e74c3c';  // Red
                     } else if (status === "აღმოუჩინეს დახმარება") {
                         color = '#2ecc71';  // Green
+                    } else if (status === "მიდის მოხალისე") {
+                        color = '#3498db';  // Blue
+                    } else if (status === "მოინახულა მოხალისემ") {
+                        color = '#9b59b6';  // Purple
                     } else {
                         color = '#95a5a6';  // Gray
                     }

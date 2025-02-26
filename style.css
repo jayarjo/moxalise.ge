@@ -188,17 +188,27 @@ a:hover {
 
 .card.pending {
     border-left: 4px solid #e74c3c;
-    /* Red for pending */
+    /* Red for pending (მომლოდინე) */
 }
 
 .card.completed {
     border-left: 4px solid #2ecc71;
-    /* Green for completed */
+    /* Green for completed (აღმოუჩინეს დახმარება) */
+}
+
+.card.volunteer-going {
+    border-left: 4px solid #3498db;
+    /* Blue for volunteer on the way (მიდის მოხალისე) */
+}
+
+.card.volunteer-visited {
+    border-left: 4px solid #9b59b6;
+    /* Purple for visited by volunteer (მოინახულა მოხალისემ) */
 }
 
 .card.empty-status {
     border-left: 4px solid #95a5a6;
-    /* Gray for empty status */
+    /* Gray for empty/unknown status (უცნობი სტატუსი) */
 }
 
 .source-link {
