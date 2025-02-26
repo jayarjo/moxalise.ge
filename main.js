@@ -12,6 +12,13 @@ let customDropdowns = {};
 // Functions for modal help request
 function openHelpModal() {
     const modal = document.getElementById('help-modal');
+    const mobileSidebarButton = document.querySelector('.mobile-sidebar-button');
+    
+    // Hide the mobile sidebar button
+    if (mobileSidebarButton) {
+        mobileSidebarButton.style.display = 'none';
+    }
+    
     modal.style.display = 'block';
     
     // Add a small delay before adding the active class for animation
@@ -25,6 +32,8 @@ function openHelpModal() {
 
 function closeHelpModal() {
     const modal = document.getElementById('help-modal');
+    const mobileSidebarButton = document.querySelector('.mobile-sidebar-button');
+    
     modal.classList.remove('active');
     
     // Add a small delay before hiding the modal completely for animation
@@ -33,6 +42,11 @@ function closeHelpModal() {
         
         // Re-enable scrolling
         document.body.style.overflow = '';
+        
+        // Show the mobile sidebar button again
+        if (mobileSidebarButton) {
+            mobileSidebarButton.style.display = '';
+        }
     }, 300);
 }
 
