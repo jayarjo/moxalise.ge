@@ -499,7 +499,7 @@ a:hover {
     position: fixed;
     top: 10px;
     right: 10px;
-    padding: 12px 20px;
+    padding: 10px 10px;
     background: #e74c3c;
     color: white;
     border: none;
@@ -507,7 +507,7 @@ a:hover {
     cursor: pointer;
     z-index: 2001;
     /* Increase z-index to be above everything */
-    font-size: 16px;
+    font-size: 15px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
