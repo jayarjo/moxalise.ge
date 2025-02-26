@@ -414,9 +414,9 @@ function formatValue(value) {
 function createTooltipHTML(feature, instanceId) {
     const data = feature.properties;
 
-    // Create wrapper with a close button
+    // Create wrapper with a close button - ensure instanceId is properly treated as a string
     let html = `<div class="info-card">
-                <button class="close-button" onclick="closeTooltip(${instanceId})">✕</button>`;
+                <button class="close-button" onclick="closeTooltip('${instanceId}')">✕</button>`;
 
     // Get all keys except internal ones
     const keys = Object.keys(data).filter(key =>
@@ -456,8 +456,16 @@ function createTooltipHTML(feature, instanceId) {
 
 // Function to close a tooltip
 function closeTooltip(id) {
-    if (window.tippyInstances && window.tippyInstances[id]) {
-        window.tippyInstances[id].hide();
+    // Ensure id is treated consistently, whether it's passed as a string or number
+    const instanceId = String(id);
+    if (window.tippyInstances && window.tippyInstances[instanceId]) {
+        window.tippyInstances[instanceId].hide();
+        // Add proper cleanup by destroying the tooltip instance
+        if (window.tippyInstances[instanceId].destroy) {
+            window.tippyInstances[instanceId].destroy();
+        }
+        // Remove the instance from our tracking object
+        delete window.tippyInstances[instanceId];
     }
 }
 
