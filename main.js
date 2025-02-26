@@ -196,7 +196,7 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange,
 
             // Use special mapping if provided, otherwise use the display value
             const actualValue = (specialMapping && displayValue && specialMapping[displayValue]) || displayValue;
-            
+
             // Update original select value
             originalSelect.value = actualValue;
 
@@ -284,7 +284,7 @@ function updateFeatures(filtered = false) {
                 const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
                 const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
                 const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
-                
+
                 // Check if the item matches the search text
                 const matchesSearch = !searchText || Object.values(item).some(value => {
                     if (value === null || value === undefined) return false;
@@ -453,7 +453,7 @@ function createTooltipHTML(feature, instanceId) {
 
     // Get all keys except internal ones and those containing 'დისკუსია'
     const keys = Object.keys(data).filter(key =>
-        !['id', 'fillColor', 'strokeColor', 'lat', 'lon', 'inGroup'].includes(key) && 
+        !['id', 'fillColor', 'strokeColor', 'lat', 'lon', 'inGroup'].includes(key) &&
         !key.includes('დისკუსია')
     );
 
@@ -463,7 +463,7 @@ function createTooltipHTML(feature, instanceId) {
 
         // Log for debugging
         console.log(`Processing field: "${key}" with value type: ${typeof value}`);
-        
+
         // Convert URLs to links (not making assumptions, just basic URL detection)
         if (value && typeof value === 'string' && isURL(value)) {
             value = `<a href="${value}" target="_blank">${value}</a>`;
@@ -807,8 +807,12 @@ function applyFilters() {
 }
 
 // Initialize map after data is loaded
-d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyIwzLFtS2150qbKVVti1uVfgDhwID3Ec6NLRrvX4AlABpxneejy1-lgTF/pub?gid=0&single=true&output=csv")
-    .then(function (data) {
+Promise.all([
+    d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyIwzLFtS2150qbKVVti1uVfgDhwID3Ec6NLRrvX4AlABpxneejy1-lgTF/pub?gid=0&single=true&output=csv"),
+    d3.csv('villages.csv')
+])
+    .then(function ([data, villages]) {
+
         // Store data globally with trimmed string values
         sampleData = data.map(d => {
             // Create a new object with all string values trimmed
@@ -830,6 +834,43 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
                 lon: trimmedObj.lon ? +trimmedObj.lon : null   // Convert to number if exists
             };
         });
+        const villageObj = {};
+        villages.forEach(v => {
+            villageObj[v.name] = v;
+        });
+
+        let localCounter = 0;
+        let raioni_village_obj = {};
+        sampleData.forEach(v => {
+            const key = v['რაიონი'] + '_' + v['სოფელი'];
+            if(v.lat && v.lon && !raioni_village_obj[key]) {
+                raioni_village_obj[key] = v;
+            }
+        });
+        sampleData.forEach(v => {
+            const key = v['რაიონი'] + '_' + v['სოფელი'];
+            if(raioni_village_obj[key] && !v.lat && !v.lon) {
+                localCounter++;
+                console.log(localCounter)
+                v.lat = raioni_village_obj[key].lat;
+                v.lon = raioni_village_obj[key].lon;
+            }
+        });
+
+        let counter = 0;
+
+        sampleData.forEach(item => {
+            const village = ((villageObj[item['სოფელი']]) || '');
+           
+            if (village && village.name && !item.lat && !item.lon) {
+                if (+village.lat && +village.long) {
+                    console.log(counter++)
+                    item.lat = +village.lat;
+                    item.lon = +village.long;
+                }
+            }
+        });
+
 
         // Calculate bounds of all points
         const bounds = sampleData.reduce((bounds, item) => {
@@ -872,7 +913,7 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
             let statusClass = 'empty-status';
             const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
             const priority = item["პრიორიტეტი"]?.trim();
-            
+
             // Check for priority first
             if (priority && status !== "აღმოუჩინეს დახმარება") {
                 statusClass = 'priority';
@@ -1136,7 +1177,7 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
                                 if (box) {
                                     const viewportHeight = window.innerHeight;
                                     const tooltipHeight = box.offsetHeight;
-                                    
+
                                     if (tooltipHeight > viewportHeight * 0.8) {
                                         // If tooltip is too tall, add a class to enable scrolling
                                         box.classList.add('scrollable-tooltip');
@@ -1240,7 +1281,7 @@ function toggleTabs() {
     // Create and load iframe only when showing the panel
     if (isHidden) {
         const placeholder = document.getElementById('iframe-placeholder');
-        
+
         // Check if iframe already exists
         if (!placeholder.querySelector('iframe')) {
             // Create iframe
@@ -1251,12 +1292,12 @@ function toggleTabs() {
             iframe.style.width = "100%";
             iframe.style.height = "100%";
             iframe.style.border = "none";
-            
+
             // Add load event to handle errors
-            iframe.onload = function() {
-                this.contentWindow.onerror = function(){ return true; };
+            iframe.onload = function () {
+                this.contentWindow.onerror = function () { return true; };
             };
-            
+
             // Add iframe to placeholder
             placeholder.appendChild(iframe);
         }
@@ -1569,7 +1610,7 @@ function addMapEventHandlers() {
                         if (box) {
                             const viewportHeight = window.innerHeight;
                             const tooltipHeight = box.offsetHeight;
-                            
+
                             if (tooltipHeight > viewportHeight * 0.8) {
                                 // If tooltip is too tall, add a class to enable scrolling
                                 box.classList.add('scrollable-tooltip');
@@ -1644,7 +1685,7 @@ function openNotificationModal(btnId) {
         console.error('Notification modal not found in openNotificationModal');
         return;
     }
-    
+
     const mobileSidebarButton = document.querySelector('.mobile-sidebar-button');
 
     // Store the button ID in a data attribute for later use
@@ -1672,7 +1713,7 @@ function openNotificationModal(btnId) {
                 <button type="submit" class="submit-btn">გაგზავნა</button>
             </form>
         `;
-        
+
         // Re-attach the submit event listener to the new form
         const newForm = document.getElementById('notification-form');
         if (newForm) {
@@ -1683,7 +1724,7 @@ function openNotificationModal(btnId) {
         const volunteerNameField = document.getElementById('volunteer-name');
         const phoneNumberField = document.getElementById('phone-number');
         const messageField = document.getElementById('notification-message');
-        
+
         if (volunteerNameField) volunteerNameField.value = '';
         if (phoneNumberField) phoneNumberField.value = '';
         if (messageField) messageField.value = '';
@@ -1711,7 +1752,7 @@ function closeNotificationModal() {
         console.error('Notification modal not found in closeNotificationModal');
         return;
     }
-    
+
     const mobileSidebarButton = document.querySelector('.mobile-sidebar-button');
 
     modal.classList.remove('active');
@@ -1739,7 +1780,7 @@ function sendNotification(btnId) {
         alert('შეტყობინების გაგზავნა ვერ მოხერხდა. გთხოვთ სცადოთ თავიდან.');
         return;
     }
-    
+
     // Open the notification modal instead of directly sending the notification
     openNotificationModal(btnId);
 }
@@ -1752,13 +1793,13 @@ function submitNotification(event) {
     const volunteerNameField = document.getElementById('volunteer-name');
     const phoneNumberField = document.getElementById('phone-number');
     const messageField = document.getElementById('notification-message');
-    
+
     // If any field is missing, show an error and return
     if (!volunteerNameField || !phoneNumberField || !messageField) {
         alert('ფორმის ელემენტები ვერ მოიძებნა. გთხოვთ სცადოთ თავიდან.');
         return;
     }
-    
+
     // Get form values
     const volunteerName = volunteerNameField.value.trim();
     const phoneNumber = phoneNumberField.value.trim();
@@ -1776,7 +1817,7 @@ function submitNotification(event) {
         alert('მოდალი ვერ მოიძებნა. გთხოვთ სცადოთ თავიდან.');
         return;
     }
-    
+
     const btnId = modal.getAttribute('data-button-id');
     if (!btnId) {
         alert('ღილაკის ID ვერ მოიძებნა. გთხოვთ სცადოთ თავიდან.');
@@ -1785,7 +1826,7 @@ function submitNotification(event) {
 
     // Extract the instance ID from the button ID
     let instanceId;
-    
+
     // Handle both types of button IDs
     if (btnId.startsWith('card-notification-btn-')) {
         instanceId = btnId.replace('card-notification-btn-', '');
@@ -1801,7 +1842,7 @@ function submitNotification(event) {
         if (Array.isArray(sampleData)) {
             // Find the item in the array that matches the instanceId
             itemData = sampleData.find(item => item.id === instanceId);
-            
+
             // If not found by id, try using the index (for backward compatibility)
             if (!itemData && !isNaN(instanceId)) {
                 const index = parseInt(instanceId);
@@ -1854,15 +1895,15 @@ function submitNotification(event) {
         },
         body: JSON.stringify(data)
     })
-    .then(response => {
-        console.log('Response status:', response.status);
+        .then(response => {
+            console.log('Response status:', response.status);
 
-        // Simplified success check - directly check the status code
-        if (response.status === 200 || response.status === 201) {
-            // Show success message in the modal
-            const form = document.getElementById('notification-form');
-            if (form) {
-                form.innerHTML = `
+            // Simplified success check - directly check the status code
+            if (response.status === 200 || response.status === 201) {
+                // Show success message in the modal
+                const form = document.getElementById('notification-form');
+                if (form) {
+                    form.innerHTML = `
                     <div class="success-message">
                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -1873,59 +1914,59 @@ function submitNotification(event) {
                         <button type="button" class="submit-btn" onclick="closeNotificationModal()">დახურვა</button>
                     </div>
                 `;
-            }
-            
-            // Update the original button
-            const button = document.getElementById(btnId);
-            if (button) {
-                button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> გაიგზავნა`;
-                button.style.backgroundColor = '#2ecc71';
-            }
-            
-            console.log('Notification sent successfully with status:', response.status);
+                }
 
-            // Try to parse JSON if available, but don't make success dependent on it
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.indexOf("application/json") !== -1) {
-                return response.json().then(data => {
-                    console.log('Response data:', data);
-                }).catch(err => {
-                    console.log('Could not parse JSON but request was successful');
+                // Update the original button
+                const button = document.getElementById(btnId);
+                if (button) {
+                    button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> გაიგზავნა`;
+                    button.style.backgroundColor = '#2ecc71';
+                }
+
+                console.log('Notification sent successfully with status:', response.status);
+
+                // Try to parse JSON if available, but don't make success dependent on it
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    return response.json().then(data => {
+                        console.log('Response data:', data);
+                    }).catch(err => {
+                        console.log('Could not parse JSON but request was successful');
+                    });
+                }
+            } else {
+                // Non-success status code
+                throw new Error(`Request failed with status code ${response.status}`);
+            }
+        })
+        .catch(error => {
+            // Reset form inputs
+            if (formInputs && formInputs.length > 0) {
+                formInputs.forEach(input => {
+                    input.disabled = false;
                 });
             }
-        } else {
-            // Non-success status code
-            throw new Error(`Request failed with status code ${response.status}`);
-        }
-    })
-    .catch(error => {
-        // Reset form inputs
-        if (formInputs && formInputs.length > 0) {
-            formInputs.forEach(input => {
-                input.disabled = false;
-            });
-        }
-        
-        // Reset button and show error
-        if (submitButton) {
-            submitButton.textContent = originalText || 'გაგზავნა';
-            submitButton.disabled = false;
-        }
-        
-        // Show error message
-        alert('შეცდომა შეტყობინების გაგზავნისას. გთხოვთ სცადოთ თავიდან.');
-        
-        console.error('Error sending notification:', error);
-    });
+
+            // Reset button and show error
+            if (submitButton) {
+                submitButton.textContent = originalText || 'გაგზავნა';
+                submitButton.disabled = false;
+            }
+
+            // Show error message
+            alert('შეცდომა შეტყობინების გაგზავნისას. გთხოვთ სცადოთ თავიდან.');
+
+            console.error('Error sending notification:', error);
+        });
 }
 
 // Add event listener for form submission when the DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const notificationForm = document.getElementById('notification-form');
     if (notificationForm) {
         notificationForm.addEventListener('submit', submitNotification);
     }
-    
+
     // Initialize search functionality
     initializeSearch();
 });
@@ -1938,32 +1979,32 @@ function initializeSearch() {
     if (!searchInput || !clearButton) return;
 
     // Add event listener for input changes
-    searchInput.addEventListener('input', function() {
+    searchInput.addEventListener('input', function () {
         const searchText = this.value.trim();
         currentSearchText = searchText;
-        
+
         // Show/hide clear button based on search text
         clearButton.style.display = searchText ? 'block' : 'none';
-        
+
         // Apply filters with the new search text
         applyFilters();
     });
 
     // Add event listener for clear button
-    clearButton.addEventListener('click', function() {
+    clearButton.addEventListener('click', function () {
         searchInput.value = '';
         currentSearchText = '';
         this.style.display = 'none';
-        
+
         // Apply filters with empty search text
         applyFilters();
-        
+
         // Focus the search input after clearing
         searchInput.focus();
     });
 
     // Add event listener for Enter key
-    searchInput.addEventListener('keydown', function(e) {
+    searchInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
             applyFilters();
