@@ -1078,8 +1078,7 @@ a:hover {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     transform: translateY(-20px);
     transition: transform 0.3s ease;
-    height: auto;
-    max-height: 90vh;
+    height: 90vh; /* Set height to 95% of viewport height */
     display: flex;
     flex-direction: column;
 }
@@ -1121,7 +1120,8 @@ a:hover {
     overflow: hidden;
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
-    flex: 1;
+    flex: 1; /* Take up remaining space */
+    height: calc(100% - 60px); /* Subtract header height */
 }
 
 .modal-body iframe {
