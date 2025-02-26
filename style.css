@@ -1508,3 +1508,30 @@ a:hover {
 .success-message .submit-btn:hover {
     background-color: #27ae60;
 }
+
+/* Loading message styles for iframe placeholder */
+.loading-message {
+    text-align: center;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 80%;
+}
+
+.loading-message p {
+    font-size: 16px;
+    color: #2c3e50;
+    margin: 0;
+    padding: 10px;
+}
+
+@media (max-width: 768px) {
+    .loading-message {
+        max-width: 90%;
+    }
+    
+    .loading-message p {
+        font-size: 14px;
+    }
+}

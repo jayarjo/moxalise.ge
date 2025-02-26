@@ -1187,6 +1187,31 @@ function toggleTabs() {
     panel.style.display = isHidden ? 'block' : 'none';
     map.classList.toggle('panel-visible');
 
+    // Create and load iframe only when showing the panel
+    if (isHidden) {
+        const placeholder = document.getElementById('iframe-placeholder');
+        
+        // Check if iframe already exists
+        if (!placeholder.querySelector('iframe')) {
+            // Create iframe
+            const iframe = document.createElement('iframe');
+            iframe.src = "https://docs.google.com/spreadsheets/d/1cWGBzYPa93_NZq8ZwtqF94fhwIdovrWkPg6-PRNaVHc/edit?usp=sharing";
+            iframe.allow = "autoplay";
+            iframe.sandbox = "allow-scripts allow-same-origin allow-popups allow-forms";
+            iframe.style.width = "100%";
+            iframe.style.height = "100%";
+            iframe.style.border = "none";
+            
+            // Add load event to handle errors
+            iframe.onload = function() {
+                this.contentWindow.onerror = function(){ return true; };
+            };
+            
+            // Add iframe to placeholder
+            placeholder.appendChild(iframe);
+        }
+    }
+
     if (window.map) {
         window.map.resize();
     }
