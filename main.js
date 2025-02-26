@@ -441,7 +441,10 @@ function createTooltipHTML(feature, instanceId) {
             continue;
         }
 
-        html += `<p><span class="info-label">${key}:</span> <span class="info-value">${value}</span></p>`;
+        // Limit key length to 20 characters
+        const displayKey = key.length > 20 ? key.substring(0, 20) + '...' : key;
+
+        html += `<p><span class="info-label">${displayKey}:</span> <span class="info-value">${value}</span></p>`;
     }
 
     // Add directions link if lat and lon are available
