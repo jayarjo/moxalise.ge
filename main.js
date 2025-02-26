@@ -1722,14 +1722,27 @@ function submitNotification(event) {
 
     // Find the data for this instance
     let itemData = null;
-    if (sampleData[instanceId]) {
-        itemData = sampleData[instanceId];
+    try {
+        if (Array.isArray(sampleData)) {
+            // Find the item in the array that matches the instanceId
+            itemData = sampleData.find(item => item.id === instanceId);
+            
+            // If not found by id, try using the index (for backward compatibility)
+            if (!itemData && !isNaN(instanceId)) {
+                const index = parseInt(instanceId);
+                if (index >= 0 && index < sampleData.length) {
+                    itemData = sampleData[index];
+                }
+            }
+        }
+    } catch (error) {
+        console.warn('Error accessing sampleData:', error);
     }
 
-    let append = '';
+    debugger;
     // Use the actual ID from the data if available
     const data = {
-        "id": append + (itemData && itemData.id ? itemData.id : "a15522"), // Fallback to sample ID if not found
+        "id": itemData && itemData.id ? itemData.id : "a15522", // Fallback to sample ID if not found
         "category": "ვაპირებ",
         "message": volunteerName + ": " + message,
         "phone": phoneNumber
