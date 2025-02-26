@@ -834,6 +834,14 @@ Promise.all([
                 lon: trimmedObj.lon ? +trimmedObj.lon : null   // Convert to number if exists
             };
         });
+
+        // Filter out records without proper district and village information
+        sampleData = sampleData.filter(item => {
+            const district = item['რაიონი']?.trim() || '';
+            const village = item['სოფელი']?.trim() || '';
+            return district && village && district !== '-' && village !== '-';
+        });
+        
         const villageObj = {};
         villages.forEach(v => {
             villageObj[v.name] = v;
