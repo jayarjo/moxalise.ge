@@ -265,6 +265,7 @@ function updateFeatures(filtered = false) {
     const selectedVillage = document.getElementById('villageFilter').value;
     const selectedPriority = document.getElementById('priorityFilter').value;
     const selectedStatus = document.getElementById('statusFilter').value;
+    const searchText = currentSearchText ? currentSearchText.toLowerCase().trim() : '';
 
     sampleData.forEach((item, index) => {
         if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
@@ -283,8 +284,14 @@ function updateFeatures(filtered = false) {
                 const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
                 const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
                 const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
+                
+                // Check if the item matches the search text
+                const matchesSearch = !searchText || Object.values(item).some(value => {
+                    if (value === null || value === undefined) return false;
+                    return String(value).toLowerCase().includes(searchText);
+                });
 
-                if (!matchesDistrict || !matchesVillage || !matchesPriority || !matchesStatus) return;
+                if (!matchesDistrict || !matchesVillage || !matchesPriority || !matchesStatus || !matchesSearch) return;
             }
 
             let color;
@@ -789,67 +796,8 @@ function applyFilters() {
         marker.getElement().style.display = (matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch) ? 'block' : 'none';
     });
 
-    // Update polygon features
-    const features = [];
-    sampleData.forEach((item, index) => {
-        if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
-            // Trim values before comparison
-            const itemDistrict = item['რაიონი']?.trim() || '';
-            const itemVillage = item['სოფელი']?.trim() || '';
-            const itemPriority = item['პრიორიტეტი']?.trim() || '';
-            const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
-
-            // Special handling for empty status
-            const matchesStatus = !selectedStatus ||
-                (selectedStatus === "EMPTY_STATUS" && itemStatus === '') ||
-                itemStatus === selectedStatus;
-
-            const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
-            const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
-            const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
-
-            // Check if the item matches the search text
-            const matchesSearch = !searchText || Object.values(item).some(value => {
-                if (value === null || value === undefined) return false;
-                return String(value).toLowerCase().includes(searchText);
-            });
-
-            if (matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch) {
-                let color;
-                const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
-                const priority = item["პრიორიტეტი"]?.trim();
-
-                // Check if priority is filled and status is not "აღმოუჩინეს დახმარება"
-                if (priority && status !== "აღმოუჩინეს დახმარება") {
-                    color = '#000000'; // Black for priority items not completed
-                } else if (status === "მომლოდინე") {
-                    color = '#e74c3c'; // Red
-                } else if (status === "აღმოუჩინეს დახმარება" || status === "აღმოუჩინეს დახმარება") {
-                    color = '#2ecc71'; // Green
-                } else if (status === "მიდის მოხალისე") {
-                    color = '#3498db'; // Blue
-                } else if (status === "მოინახულა მოხალისემ") {
-                    color = '#9b59b6'; // Purple
-                } else {
-                    color = '#95a5a6'; // Gray for unknown/empty status
-                }
-
-                features.push({
-                    type: 'Feature',
-                    properties: {
-                        id: index,
-                        ...item,
-                        fillColor: color,
-                        strokeColor: color
-                    },
-                    geometry: {
-                        type: 'Polygon',
-                        coordinates: [createPolygonCoordinates(map, item.lon, item.lat)]
-                    }
-                });
-            }
-        }
-    });
+    // Update polygon features using the updateFeatures function with filtering enabled
+    const features = updateFeatures(true);
 
     // Update the source data
     map.getSource('locations').setData({
