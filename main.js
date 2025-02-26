@@ -39,18 +39,18 @@ function closeHelpModal() {
 
     modal.classList.remove('active');
 
-    // Add a small delay before hiding the modal completely for animation
+    // Add a small delay before hiding the modal to allow for animation
     setTimeout(() => {
         modal.style.display = 'none';
 
-        // Re-enable scrolling
-        document.body.style.overflow = '';
-
-        // Show the mobile sidebar button again
-        if (mobileSidebarButton) {
-            mobileSidebarButton.style.display = '';
+        // Show the mobile sidebar button again if it exists
+        if (mobileSidebarButton && window.innerWidth <= 768) {
+            mobileSidebarButton.style.display = 'block';
         }
     }, 300);
+
+    // Re-enable scrolling of the background content
+    document.body.style.overflow = '';
 }
 
 // Close modal if user clicks outside the modal content
@@ -2011,3 +2011,73 @@ function initializeSearch() {
         }
     });
 }
+
+// Functions for instructions modal
+function openInstructionsModal() {
+    const modal = document.getElementById('instructions-modal');
+    const mobileSidebarButton = document.querySelector('.mobile-sidebar-button');
+
+    // Hide the mobile sidebar button
+    if (mobileSidebarButton) {
+        mobileSidebarButton.style.display = 'none';
+    }
+
+    modal.style.display = 'block';
+
+    // Add a small delay before adding the active class for animation
+    setTimeout(() => {
+        modal.classList.add('active');
+    }, 10);
+
+    // Prevent scrolling of the background content
+    document.body.style.overflow = 'hidden';
+}
+
+function closeInstructionsModal() {
+    const modal = document.getElementById('instructions-modal');
+    const mobileSidebarButton = document.querySelector('.mobile-sidebar-button');
+
+    modal.classList.remove('active');
+
+    // Add a small delay before hiding the modal to allow for animation
+    setTimeout(() => {
+        modal.style.display = 'none';
+
+        // Show the mobile sidebar button again if it exists
+        if (mobileSidebarButton && window.innerWidth <= 768) {
+            mobileSidebarButton.style.display = 'block';
+        }
+    }, 300);
+
+    // Re-enable scrolling of the background content
+    document.body.style.overflow = '';
+}
+
+// Function to initialize instruction tabs
+function initInstructionTabs() {
+    const tabs = document.querySelectorAll('.instructions-tab');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Remove active class from all tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            tab.classList.add('active');
+            
+            // Hide all content sections
+            document.querySelectorAll('.instructions-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Show the corresponding content section
+            const tabId = tab.getAttribute('data-tab');
+            document.getElementById(`${tabId}-content`).classList.add('active');
+        });
+    });
+}
+
+// Add event listener for DOM content loaded to initialize tabs
+document.addEventListener('DOMContentLoaded', function() {
+    initInstructionTabs();
+});

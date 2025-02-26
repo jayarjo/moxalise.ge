@@ -65,6 +65,100 @@
     <!-- Help Request Button -->
     <button class="help-request-button" onclick="openHelpModal()">დახმარების მოთხოვნა</button>
 
+    <!-- Instructions Button -->
+    <button class="instructions-button" onclick="openInstructionsModal()">ინსტრუქცია</button>
+
+    <!-- Instructions Modal -->
+    <div id="instructions-modal" class="modal">
+        <div class="modal-content instructions-modal-content">
+            <div class="modal-header">
+                <h2>ინსტრუქცია</h2>
+                <span class="modal-close" onclick="closeInstructionsModal()">&times;</span>
+            </div>
+            <div class="modal-body instructions-modal-body">
+                <div class="instructions-tabs">
+                    <button class="instructions-tab active" data-tab="need-help">დახმარების მაძიებლებისთვის</button>
+                    <button class="instructions-tab" data-tab="volunteers">მოხალისეებისთვის</button>
+                </div>
+                
+                <div class="instructions-content active" id="need-help-content">
+                    <h3>როგორ მოითხოვოთ დახმარება</h3>
+                    <div class="instruction-steps">
+                        <ol>
+                            <li>
+                                <strong>დახმარების მოთხოვნის ფორმის შევსება</strong>
+                                <p>დააჭირეთ ღილაკს "დახმარების მოთხოვნა" ეკრანის ზედა მარცხენა კუთხეში და შეავსეთ ფორმა შემდეგი ინფორმაციით:</p>
+                                <ul>
+                                    <li>თქვენი სახელი და გვარი</li>
+                                    <li>საკონტაქტო ტელეფონის ნომერი</li>
+                                    <li>მისამართი (რაიონი, სოფელი, ქუჩა)</li>
+                                    <li>რა სახის დახმარება გჭირდებათ</li>
+                                    <li>რამდენი ადამიანი ხართ</li>
+                                    <li>დამატებითი ინფორმაცია (საჭიროების შემთხვევაში)</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong>მოლოდინი</strong>
+                                <p>თქვენი მოთხოვნა დაემატება რუკაზე და მოხალისეები შეძლებენ მის ნახვას. მოხალისე დაგიკავშირდებათ თქვენ მიერ მითითებულ ნომერზე.</p>
+                            </li>
+                            <li>
+                                <strong>დახმარების მიღება</strong>
+                                <p>მოხალისე მოგაწვდით საჭირო დახმარებას. თქვენი მოთხოვნის სტატუსი განახლდება რუკაზე.</p>
+                            </li>
+                        </ol>
+                    </div>
+                    <div class="important-note">
+                        <h4>მნიშვნელოვანი შენიშვნა:</h4>
+                        <p>გადაუდებელი სამედიცინო დახმარების საჭიროების შემთხვევაში, დარეკეთ 112-ზე.</p>
+                    </div>
+                </div>
+                
+                <div class="instructions-content" id="volunteers-content">
+                    <h3>როგორ დაეხმაროთ დაზარალებულებს</h3>
+                    <div class="instruction-steps">
+                        <ol>
+                            <li>
+                                <strong>რუკის გამოყენება</strong>
+                                <p>რუკაზე ნაჩვენებია დახმარების მომლოდინე ადამიანების მდებარეობა. ფერები აღნიშნავს სხვადასხვა სტატუსს:</p>
+                                <ul>
+                                    <li><span class="status-dot" style="background-color: #000000;"></span> შავი - სასწრაფო დახმარების საჭიროება</li>
+                                    <li><span class="status-dot" style="background-color: #e74c3c;"></span> წითელი - მომლოდინე</li>
+                                    <li><span class="status-dot" style="background-color: #3498db;"></span> ლურჯი - მიდის მოხალისე</li>
+                                    <li><span class="status-dot" style="background-color: #9b59b6;"></span> იისფერი - მოინახულა მოხალისემ</li>
+                                    <li><span class="status-dot" style="background-color: #2ecc71;"></span> მწვანე - აღმოუჩინეს დახმარება</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong>დახმარების შეთავაზება ან სტატუსის განახლება</strong>
+                                <p>როდესაც აირჩევთ ვის დაეხმაროთ:</p>
+                                <ul>
+                                    <li>დააჭირეთ რუკაზე მარკერს ან სიაში შესაბამის ბარათს</li>
+                                    <li>დააჭირეთ "შეტყობინების გაგზავნა/განახლება" ღილაკს</li>
+                                    <li>შეავსეთ თქვენი სახელი, საკონტაქტო ნომერი და რა სახის დახმარებას სთავაზობთ ან  რა სახის დახმარება გაუწიეთ</li>
+                                    <li>დააჭირეთ "გაგზავნა" ღილაკს</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong>კოორდინაცია</strong>
+                                <p>შეტყობინების გაგზავნის შემდეგ, დაზარალებულს დაუკავშირდით პირდაპირ. კოორდინაციისთვის შეგიძლიათ ასევე გამოიყენოთ:</p>
+                                <ul>
+                                    <li><a href="https://www.facebook.com/groups/634781109242732" target="_blank">Facebook ჯგუფი</a></li>
+                                    <li><a href="https://t.me/guria_sos" target="_blank">Telegram ჯგუფი</a></li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                    <div class="important-note">
+                        <h4>მნიშვნელოვანი რჩევები:</h4>
+                        <p>- დარწმუნდით, რომ გაქვთ საკმარისი რესურსები დახმარების გასაწევად</p>
+                        <p>- აცნობეთ ვინმეს თქვენი მარშრუტის შესახებ</p>
+                        <p>- გაითვალისწინეთ ამინდის პირობები და გზების მდგომარეობა</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Help Request Modal -->
     <div id="help-modal" class="modal">
         <div class="modal-content">

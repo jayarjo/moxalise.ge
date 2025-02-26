@@ -1639,3 +1639,154 @@ a:hover {
     max-height: 80vh !important;
     overflow: hidden !important;
 }
+
+/* Instructions Button Styles */
+.instructions-button {
+    position: fixed;
+    right: 350px;
+    top: 10px;
+    z-index: 1000;
+    background-color: #3498db;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.instructions-button:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Instructions Modal Styles */
+.instructions-modal-content {
+    max-width: 800px;
+    width: 90%;
+    height: auto;
+    max-height: 90vh;
+}
+
+.instructions-modal-body {
+    padding: 0;
+    overflow-y: auto;
+}
+
+/* Instructions Tabs */
+.instructions-tabs {
+    display: flex;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.instructions-tab {
+    flex: 1;
+    padding: 15px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: 500;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.instructions-tab:hover {
+    background-color: #e9ecef;
+}
+
+.instructions-tab.active {
+    color: #3498db;
+    border-bottom-color: #3498db;
+    background-color: #e9ecef;
+}
+
+/* Instructions Content */
+.instructions-content {
+    display: none;
+    padding: 25px;
+}
+
+.instructions-content.active {
+    display: block;
+}
+
+.instructions-content h3 {
+    color: #2c3e50;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 22px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* Status Dots for Legend in Instructions */
+.status-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+/* Important Note Box */
+.important-note {
+    background-color: #f8d7da;
+    border-left: 4px solid #e74c3c;
+    padding: 15px;
+    margin-top: 25px;
+    border-radius: 4px;
+}
+
+.important-note h4 {
+    color: #721c24;
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.important-note p {
+    color: #721c24;
+    margin: 5px 0;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .instructions-button {
+        right: 10px;
+        top: 60px;
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+    
+    .instructions-modal-content {
+        width: 100%;
+        margin: 0;
+        height: 100vh;
+        border-radius: 0;
+        max-width: none;
+    }
+    
+    .instructions-tab {
+        padding: 12px 10px;
+        font-size: 14px;
+    }
+    
+    .instructions-content {
+        padding: 15px;
+    }
+    
+    .instructions-content h3 {
+        font-size: 18px;
+    }
+    
+    .important-note h4 {
+        font-size: 16px;
+    }
+}
