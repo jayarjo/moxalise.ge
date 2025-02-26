@@ -421,7 +421,8 @@ function createTooltipHTML(feature, instanceId) {
 
     // Create wrapper with a close button - ensure instanceId is properly treated as a string
     let html = `<div class="info-card">
-                <button class="close-button" onclick="closeTooltip('${instanceId}')">✕</button>`;
+                <button class="close-button" onclick="closeTooltip('${instanceId}')">✕</button>
+                <div class="info-card-scrollable">`;
 
     // Add ID at the top of the tooltip using the CSS classes
     html += `<p class="id-field">
@@ -429,15 +430,19 @@ function createTooltipHTML(feature, instanceId) {
                 <span class="id-value">${data.id || ''}</span>
             </p>`;
 
-    // Get all keys except internal ones
+    // Get all keys except internal ones and those containing 'დისკუსია'
     const keys = Object.keys(data).filter(key =>
-        !['id', 'fillColor', 'strokeColor', 'lat', 'lon'].includes(key)
+        !['id', 'fillColor', 'strokeColor', 'lat', 'lon', 'inGroup'].includes(key) && 
+        !key.includes('დისკუსია')
     );
 
     // Process all fields
     for (const key of keys) {
         let value = data[key];
 
+        // Log for debugging
+        console.log(`Processing field: "${key}" with value type: ${typeof value}`);
+        
         // Convert URLs to links (not making assumptions, just basic URL detection)
         if (value && typeof value === 'string' && isURL(value)) {
             value = `<a href="${value}" target="_blank">${value}</a>`;
@@ -446,9 +451,16 @@ function createTooltipHTML(feature, instanceId) {
         else if (value === null || value === undefined) {
             value = "";
         }
+        // Special handling for fields that might contain newlines
+        else if (typeof value === 'string' && value.includes('\n')) {
+            // Replace newlines with HTML line breaks for any field with newlines
+            value = value.replace(/\n/g, '<br>');
+            console.log(`Applied newline conversion for field: ${key}`);
+        }
 
         // Skip empty values (null, undefined, empty string, or whitespace-only)
         if (value === "" || (typeof value === 'string' && value.trim() === "")) {
+            console.log(`Skipping empty field: ${key}`);
             continue;
         }
 
@@ -457,6 +469,9 @@ function createTooltipHTML(feature, instanceId) {
 
         html += `<p><span class="info-label">${displayKey}:</span> <span class="info-value">${value}</span></p>`;
     }
+
+    // Close the scrollable div
+    html += `</div>`;
 
     // Add directions link if lat and lon are available
     if (data.lat && data.lon) {
@@ -1087,12 +1102,37 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRfK0UcHgAiwmJwTSWe2dxyI
                                         name: 'preventOverflow',
                                         options: {
                                             boundary: 'viewport',
+                                            padding: 10,
+                                            altAxis: true
+                                        }
+                                    },
+                                    {
+                                        name: 'flip',
+                                        options: {
+                                            fallbackPlacements: ['bottom', 'right', 'left'],
+                                            padding: 10
                                         }
                                     }
                                 ]
                             },
                             interactiveBorder: 30,
-                            zIndex: 9999
+                            zIndex: 9999,
+                            maxWidth: 350,
+                            // Add these properties for scrollable tooltips
+                            animation: 'shift-away',
+                            onMount(instance) {
+                                // Check if tooltip content is taller than viewport
+                                const box = instance.popper.querySelector('.tippy-box');
+                                if (box) {
+                                    const viewportHeight = window.innerHeight;
+                                    const tooltipHeight = box.offsetHeight;
+                                    
+                                    if (tooltipHeight > viewportHeight * 0.8) {
+                                        // If tooltip is too tall, add a class to enable scrolling
+                                        box.classList.add('scrollable-tooltip');
+                                    }
+                                }
+                            }
                         });
 
                         window.tippyInstances[index].show();
@@ -1495,12 +1535,37 @@ function addMapEventHandlers() {
                                 name: 'preventOverflow',
                                 options: {
                                     boundary: 'viewport',
+                                    padding: 10,
+                                    altAxis: true
+                                }
+                            },
+                            {
+                                name: 'flip',
+                                options: {
+                                    fallbackPlacements: ['bottom', 'right', 'left'],
+                                    padding: 10
                                 }
                             }
                         ]
                     },
                     interactiveBorder: 30,
-                    zIndex: 9999
+                    zIndex: 9999,
+                    maxWidth: 350,
+                    // Add these properties for scrollable tooltips
+                    animation: 'shift-away',
+                    onMount(instance) {
+                        // Check if tooltip content is taller than viewport
+                        const box = instance.popper.querySelector('.tippy-box');
+                        if (box) {
+                            const viewportHeight = window.innerHeight;
+                            const tooltipHeight = box.offsetHeight;
+                            
+                            if (tooltipHeight > viewportHeight * 0.8) {
+                                // If tooltip is too tall, add a class to enable scrolling
+                                box.classList.add('scrollable-tooltip');
+                            }
+                        }
+                    }
                 });
 
                 // Show the tooltip

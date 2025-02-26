@@ -51,6 +51,34 @@ body {
     font-size: 14px;
     position: relative;
     z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh; /* Limit to 80% of viewport height */
+}
+
+.info-card-scrollable {
+    overflow-y: auto;
+    max-height: calc(80vh - 80px); /* Account for header and footer */
+    padding-right: 5px;
+    scrollbar-width: thin;
+}
+
+.info-card-scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+
+.info-card-scrollable::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.info-card-scrollable::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.info-card-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 
 .info-card h3 {
@@ -1222,6 +1250,9 @@ a:hover {
     padding-top: 10px;
     border-top: 1px solid #eee;
     gap: 10px;
+    position: sticky;
+    bottom: 0;
+    background: white;
 }
 
 .directions-container a {
@@ -1534,4 +1565,16 @@ a:hover {
     .loading-message p {
         font-size: 14px;
     }
+}
+
+/* Tippy theme modifications for scrollable content */
+.tippy-box[data-theme~='light'] {
+    max-height: 80vh;
+    overflow: hidden;
+}
+
+/* Class added dynamically when tooltip is taller than viewport */
+.scrollable-tooltip {
+    max-height: 80vh !important;
+    overflow: hidden !important;
 }
