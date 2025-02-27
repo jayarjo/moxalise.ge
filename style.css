@@ -1181,6 +1181,7 @@ a:hover {
     transform: translateY(-2px);
 }
 
+/* Help Offer Button */
 .help-offer-button {
     position: absolute;
     top: 60px;
@@ -1199,6 +1200,31 @@ a:hover {
 
 .help-offer-button:hover {
     background-color: #2980b9;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Location Share Button - Mobile Only */
+.location-share-button {
+    position: absolute;
+    top: calc(100vh - 53px);
+    left: calc(100vw - 159px);
+    z-index: 10;
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: none; /* Hidden by default, shown only on mobile */
+}
+
+.location-share-button:hover {
+    background-color: #219653;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
     transform: translateY(-2px);
 }
@@ -1344,6 +1370,15 @@ a:hover {
     .help-offer-button {
         top: 50px;
         left: 10px;
+        padding: 8px 12px;
+        font-size: 12px;
+        width: auto;
+    }
+    
+    .location-share-button {
+        display: block; /* Show on mobile */
+        top: calc(100vh - 53px);
+        left: calc(100vw - 159px);
         padding: 8px 12px;
         font-size: 12px;
         width: auto;
