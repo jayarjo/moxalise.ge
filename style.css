@@ -736,11 +736,14 @@ a:hover {
     border: 3px solid black;
     z-index: 20;
     /* Ensure highlighted pin is above all others, even hovered ones */
-    transform: rotate(45deg) scale(1.15);
+    transform: rotate(45deg) scale(3); /* Make highlighted pins 3x bigger */
+    transform-origin: center bottom;
+    box-shadow: 0 0 15px 5px rgba(255, 255, 0, 0.7); /* Add yellow glow effect */
 }
 
 .map-pin.highlighted:hover {
-    transform: rotate(45deg) scale(1.2);
+    transform: rotate(45deg) scale(3.1); /* Slightly larger on hover */
+    box-shadow: 0 0 20px 8px rgba(255, 255, 0, 0.8); /* Stronger glow on hover */
 }
 
 .map-pin::after {

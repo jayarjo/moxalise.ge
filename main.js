@@ -12,6 +12,19 @@ let customDropdowns = {};
 // Add a global variable to store the current search text
 let currentSearchText = '';
 
+// Add a debug flag to help troubleshoot highlighting issues
+let DEBUG_HIGHLIGHT = true;
+
+// Add a flag to track when the map is fully initialized
+let mapFullyInitialized = false;
+
+// Function to log debug messages for highlighting
+function debugHighlight(message) {
+    if (DEBUG_HIGHLIGHT) {
+        console.log(`[HIGHLIGHT DEBUG] ${message}`);
+    }
+}
+
 // Functions for modal help request
 function openHelpModal() {
     const modal = document.getElementById('help-modal');
@@ -875,28 +888,147 @@ function closeTooltip(id) {
     }
 }
 
-// Add highlightPolygon function before map initialization
-function highlightPolygon(map, index) {
-    if (!map || !map.getLayer('location-polygons') || !map.getLayer('location-polygons-outline')) {
-        console.warn('Map or required layers not found in highlightPolygon');
+// Function to restore all polygons to their original size
+function restorePolygonSizes(map) {
+    try {
+        debugHighlight("Restoring all polygon sizes");
+        // Regenerate features with original sizes
+        const features = updateFeatures(true);
+        
+        // Update the source data
+        map.getSource('locations').setData({
+            type: 'FeatureCollection',
+            features: features
+        });
+    } catch (error) {
+        console.error('Error restoring polygon sizes:', error);
+    }
+}
+
+// Add a function to check if the map is fully initialized
+function isMapReady(map) {
+    if (!map) {
+        debugHighlight("Map is not defined");
+        return false;
+    }
+    
+    // First check the global flag
+    if (!mapFullyInitialized) {
+        debugHighlight("Map is not fully initialized yet");
+        return false;
+    }
+    
+    try {
+        // Check if the map has the required layers
+        const hasPolygonLayer = map.getLayer('location-polygons');
+        const hasOutlineLayer = map.getLayer('location-polygons-outline');
+        
+        // Check if the source exists and has data
+        const hasSource = map.getSource('locations');
+        const hasData = hasSource && hasSource._data && hasSource._data.features;
+        
+        const isReady = hasPolygonLayer && hasOutlineLayer && hasSource && hasData;
+        
+        if (!isReady) {
+            debugHighlight(`Map not ready: layers=${hasPolygonLayer && hasOutlineLayer}, source=${!!hasSource}, data=${!!hasData}`);
+        }
+        
+        return isReady;
+    } catch (error) {
+        debugHighlight(`Error checking map readiness: ${error.message}`);
+        return false;
+    }
+}
+
+// Modify the highlightPolygon function to use the isMapReady check
+function highlightPolygon(map, index, force = false) {
+    debugHighlight(`Highlighting polygon with index: ${index}, force: ${force}`);
+    
+    if (!force && !isMapReady(map)) {
+        console.warn('Map is not ready for highlighting. Will retry in 500ms.');
+        // Retry after a delay if the map isn't ready
+        setTimeout(() => highlightPolygon(map, index), 500);
         return;
     }
 
-    // Reset all polygons
     try {
+        // Store the current data
+        const currentData = map.getSource('locations')?._data;
+        
+        if (!currentData || !currentData.features) {
+            console.error('No data available in map source');
+            return;
+        }
+        
+        // If we have a valid index, resize the selected polygon to be 3x bigger
+        if (index >= 0 && currentData && currentData.features) {
+            // First, restore all polygons to their original size
+            restorePolygonSizes(map);
+            
+            // Find the feature with the matching id
+            const selectedFeature = currentData.features.find(f => f.properties.id === index);
+            
+            if (selectedFeature) {
+                debugHighlight(`Found feature with id ${index}, resizing to 3x`);
+                // Get the current center of the polygon
+                const coordinates = selectedFeature.geometry.coordinates[0];
+                const centerLng = coordinates.reduce((sum, coord) => sum + coord[0], 0) / coordinates.length;
+                const centerLat = coordinates.reduce((sum, coord) => sum + coord[1], 0) / coordinates.length;
+                
+                // Create new coordinates for the polygon that are 3x bigger
+                const newCoordinates = coordinates.map(coord => {
+                    const dx = coord[0] - centerLng;
+                    const dy = coord[1] - centerLat;
+                    return [centerLng + dx * 3, centerLat + dy * 3];
+                });
+                
+                // Update the coordinates in the feature
+                selectedFeature.geometry.coordinates[0] = newCoordinates;
+                
+                // Update the source data
+                map.getSource('locations').setData(currentData);
+            } else {
+                debugHighlight(`Feature with id ${index} not found in the data`);
+            }
+        } else if (index === -1) {
+            // If index is -1, restore all polygons to their original size
+            restorePolygonSizes(map);
+        }
+
+        // Reset all polygons
         map.setPaintProperty('location-polygons', 'fill-opacity', [
-            'case',
-            ['==', ['get', 'id'], index],
-            0.9, // highlighted opacity
-            [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                5, 0.01,   // At zoom level 5 and below, opacity is 1% (almost invisible)
-                8, 0.3,    // At zoom level 8, opacity is 30%
-                11, 0.8,   // At zoom level 11, opacity peaks at 80%
-                13, 0.3,   // At zoom level 13, opacity decreases to 30%
-                15, 0.08   // At zoom level 15 and above, opacity is 8% (almost invisible again)
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            5, [
+                'case',
+                ['==', ['get', 'id'], index],
+                0.9,  // highlighted opacity
+                0.01  // default opacity at zoom level 5
+            ],
+            8, [
+                'case',
+                ['==', ['get', 'id'], index],
+                0.9,  // highlighted opacity
+                0.3   // default opacity at zoom level 8
+            ],
+            11, [
+                'case',
+                ['==', ['get', 'id'], index],
+                0.9,  // highlighted opacity
+                0.8   // default opacity at zoom level 11
+            ],
+            13, [
+                'case',
+                ['==', ['get', 'id'], index],
+                0.9,  // highlighted opacity
+                0.3   // default opacity at zoom level 13
+            ],
+            15, [
+                'case',
+                ['==', ['get', 'id'], index],
+                0.9,  // highlighted opacity
+                0.08  // default opacity at zoom level 15
             ]
         ]);
 
@@ -911,11 +1043,13 @@ function highlightPolygon(map, index) {
         map.setPaintProperty('location-polygons-outline', 'line-width', [
             'case',
             ['==', ['get', 'id'], index],
-            5,    // highlighted width
+            8,    // highlighted width - increased from 5 to 8
             2     // default width
         ]);
+        
+        debugHighlight(`Successfully updated polygon styles for index ${index}`);
     } catch (error) {
-        console.error('Error setting map paint properties:', error);
+        console.error('Error in highlightPolygon:', error);
     }
 
     // Remove highlight from all pins
@@ -929,6 +1063,7 @@ function highlightPolygon(map, index) {
             const pinElement = marker.marker.getElement().querySelector('.map-pin');
             if (pinElement) {
                 pinElement.classList.add('highlighted');
+                debugHighlight(`Added highlighted class to pin with id ${index}`);
             }
         }
     });
@@ -940,6 +1075,7 @@ function highlightPolygon(map, index) {
     const selectedCard = document.querySelector(`.card[data-index="${index}"]`);
     if (selectedCard) {
         selectedCard.classList.add('highlighted-card');
+        debugHighlight(`Added highlighted-card class to card with data-index ${index}`);
         
         // Scroll the card into view if it's visible
         if (selectedCard.style.display !== 'none') {
@@ -1661,11 +1797,87 @@ Promise.all([
 
                 // If has coordinates and isn't clicking to expand
                 if (item.lat && item.lon && !e.target.closest('.card-content')) {
+                    console.log(`Card clicked for item ${index} with coordinates [${item.lon}, ${item.lat}]`);
+                    debugHighlight(`Card clicked for item ${index} with coordinates [${item.lon}, ${item.lat}]`);
+                    
+                    // First, use the simple highlight approach that doesn't touch the map
+                    // This ensures the card and pin are highlighted immediately
+                    simpleHighlightPolygon(map, index);
+                    
+                    // Then fly to the location
                     map.flyTo({
                         center: [item.lon, item.lat],
                         zoom: 12
                     });
-                    highlightPolygon(map, index);
+                    
+                    // Log the map state
+                    console.log("Map state:", {
+                        zoom: map.getZoom(),
+                        center: map.getCenter(),
+                        mapInitialized: mapFullyInitialized,
+                        hasPolygonLayer: map.getLayer('location-polygons') ? true : false,
+                        hasOutlineLayer: map.getLayer('location-polygons-outline') ? true : false,
+                        hasSource: map.getSource('locations') ? true : false
+                    });
+                    
+                    // Add a longer delay to ensure the map has finished moving and all layers are loaded
+                    setTimeout(() => {
+                        // Check if map is ready, if not we'll retry with increasing delays
+                        const mapReady = isMapReady(map);
+                        console.log(`Map ready check result: ${mapReady}`);
+                        
+                        if (mapReady) {
+                            console.log(`Highlighting polygon with index ${index} on first attempt`);
+                            highlightPolygon(map, index);
+                        } else {
+                            console.log("Map not ready on first attempt, will retry with increasing delays");
+                            debugHighlight("Map not ready on first attempt, will retry with increasing delays");
+                            
+                            // Try to ensure map has required layers
+                            const layersEnsured = ensureMapLayers(map);
+                            console.log(`Map layers ensured: ${layersEnsured}`);
+                            
+                            // If layers were ensured, try the direct highlight approach
+                            if (layersEnsured) {
+                                directHighlightPolygon(map, index);
+                            }
+                            
+                            // Try again after 500ms
+                            setTimeout(() => {
+                                const mapReadySecondAttempt = isMapReady(map);
+                                console.log(`Map ready check second attempt: ${mapReadySecondAttempt}`);
+                                
+                                if (mapReadySecondAttempt) {
+                                    console.log(`Highlighting polygon with index ${index} on second attempt`);
+                                    highlightPolygon(map, index);
+                                } else {
+                                    console.log("Map not ready on second attempt, trying once more");
+                                    debugHighlight("Map not ready on second attempt, trying once more");
+                                    
+                                    // Final attempt after another 1000ms
+                                    setTimeout(() => {
+                                        console.log("Final attempt to highlight polygon");
+                                        console.log("Map state:", {
+                                            zoom: map.getZoom(),
+                                            center: map.getCenter(),
+                                            mapInitialized: mapFullyInitialized,
+                                            hasPolygonLayer: map.getLayer('location-polygons') ? true : false,
+                                            hasOutlineLayer: map.getLayer('location-polygons-outline') ? true : false,
+                                            hasSource: map.getSource('locations') ? true : false
+                                        });
+                                        
+                                        // Force highlight even if map isn't ready
+                                        try {
+                                            console.log(`Forcing highlight for index ${index}`);
+                                            highlightPolygon(map, index, true); // Force highlight
+                                        } catch (error) {
+                                            console.error("Error in final highlight attempt:", error);
+                                        }
+                                    }, 1000);
+                                }
+                            }, 500);
+                        }
+                    }, 200);
                 }
             });
 
@@ -1911,11 +2123,11 @@ Promise.all([
                         'interpolate',
                         ['linear'],
                         ['zoom'],
-                        5, 0.01,   // At zoom level 5 and below, opacity is 1% (almost invisible)
+                        5, 0.01,   // At zoom level 5, opacity is 1%
                         8, 0.3,    // At zoom level 8, opacity is 30%
                         11, 0.8,   // At zoom level 11, opacity peaks at 80%
                         13, 0.3,   // At zoom level 13, opacity decreases to 30%
-                        15, 0.08   // At zoom level 15 and above, opacity is 8% (almost invisible again)
+                        15, 0.08   // At zoom level 15, opacity is 8%
                     ]
                 }
             });
@@ -1960,6 +2172,10 @@ Promise.all([
 
             // Update on resize
             window.addEventListener('resize', updateLegendPosition);
+            
+            // Set the flag indicating the map is fully initialized
+            mapFullyInitialized = true;
+            debugHighlight("Map is now fully initialized and ready for highlighting");
         });
     })
     .catch(function (error) {
@@ -2198,11 +2414,11 @@ function toggleSatellite() {
                             'interpolate',
                             ['linear'],
                             ['zoom'],
-                            5, 0.01,   // At zoom level 5 and below, opacity is 1% (almost invisible)
+                            5, 0.01,   // At zoom level 5, opacity is 1%
                             8, 0.3,    // At zoom level 8, opacity is 30%
                             11, 0.8,   // At zoom level 11, opacity peaks at 80%
                             13, 0.3,   // At zoom level 13, opacity decreases to 30%
-                            15, 0.08   // At zoom level 15 and above, opacity is 8% (almost invisible again)
+                            15, 0.08   // At zoom level 15, opacity is 8%
                         ]
                     }
                 });
@@ -2234,103 +2450,124 @@ function addMapEventHandlers() {
         if (e.features.length > 0) {
             const feature = e.features[0];
             const id = feature.properties.id;
-            highlightPolygon(map, id);
-
-            // Get click position - adjust to match similar positioning as the pins
-            const clickX = e.point.x;
-            const clickY = e.point.y - 15; // Position higher to match pin tooltip placement
-
-            // Create tooltip content with the ID for close button reference
-            const tooltipContent = document.createElement('div');
-            tooltipContent.innerHTML = createTooltipHTML(feature, id);
-
-            // Create marker element to attach tooltip to
-            let marker = document.getElementById(`marker-${id}`);
-            if (!marker) {
-                marker = document.createElement('div');
-                marker.id = `marker-${id}`;
-                marker.style.position = 'absolute';
-                marker.style.top = `${clickY}px`;
-                marker.style.left = `${clickX}px`;
-                marker.style.width = '1px';
-                marker.style.height = '1px';
-                document.body.appendChild(marker);
+            
+            debugHighlight(`Polygon clicked with id: ${id}`);
+            
+            // Use the same approach as the card click handler
+            if (!isMapReady(map)) {
+                debugHighlight("Map not ready on polygon click, will retry with increasing delays");
+                
+                // Try again after 200ms
+                setTimeout(() => {
+                    highlightPolygon(map, id);
+                    
+                    // Create tooltip after highlighting
+                    createTooltipForFeature(feature, id, e.point);
+                }, 200);
             } else {
-                marker.style.top = `${clickY}px`;
-                marker.style.left = `${clickX}px`;
+                highlightPolygon(map, id);
+                
+                // Create tooltip after highlighting
+                createTooltipForFeature(feature, id, e.point);
             }
+        }
+    });
 
-            // Hide any existing tooltips first to ensure only one is shown at a time
-            Object.values(window.tippyInstances || {}).forEach(instance => {
-                if (instance && instance.hide) {
-                    instance.hide();
+    // Helper function to create tooltip for a feature
+    function createTooltipForFeature(feature, id, point) {
+        // Get click position - adjust to match similar positioning as the pins
+        const clickX = point.x;
+        const clickY = point.y - 15; // Position higher to match pin tooltip placement
+
+        // Create tooltip content with the ID for close button reference
+        const tooltipContent = document.createElement('div');
+        tooltipContent.innerHTML = createTooltipHTML(feature, id);
+
+        // Create marker element to attach tooltip to
+        let marker = document.getElementById(`marker-${id}`);
+        if (!marker) {
+            marker = document.createElement('div');
+            marker.id = `marker-${id}`;
+            marker.style.position = 'absolute';
+            marker.style.top = `${clickY}px`;
+            marker.style.left = `${clickX}px`;
+            marker.style.width = '1px';
+            marker.style.height = '1px';
+            document.body.appendChild(marker);
+        } else {
+            marker.style.top = `${clickY}px`;
+            marker.style.left = `${clickX}px`;
+        }
+
+        // Hide any existing tooltips first to ensure only one is shown at a time
+        Object.values(window.tippyInstances || {}).forEach(instance => {
+            if (instance && instance.hide) {
+                instance.hide();
+            }
+        });
+
+        // Create new instance on the marker element
+        setTimeout(() => {
+            window.tippyInstances = window.tippyInstances || {};
+            window.tippyInstances[id] = tippy(marker, {
+                content: tooltipContent,
+                allowHTML: true,
+                interactive: true,
+                theme: 'light',
+                placement: 'top',
+                trigger: 'manual',
+                appendTo: document.body,
+                showOnCreate: true,
+                hideOnClick: false,
+                offset: [0, 15],
+                distance: 15,
+                arrow: true,
+                popperOptions: {
+                    strategy: 'fixed',
+                    modifiers: [
+                        {
+                            name: 'preventOverflow',
+                            options: {
+                                boundary: 'viewport',
+                                padding: 10,
+                                altAxis: true
+                            }
+                        },
+                        {
+                            name: 'flip',
+                            options: {
+                                fallbackPlacements: ['bottom', 'right', 'left'],
+                                padding: 10
+                            }
+                        }
+                    ]
+                },
+                interactiveBorder: 30,
+                zIndex: 3000,
+                maxWidth: 350,
+                // Add these properties for scrollable tooltips
+                animation: 'shift-away',
+                onMount(instance) {
+                    // Check if tooltip content is taller than viewport
+                    const box = instance.popper.querySelector('.tippy-box');
+                    if (box) {
+                        const viewportHeight = window.innerHeight;
+                        const tooltipHeight = box.offsetHeight;
+
+                        if (tooltipHeight > viewportHeight * 0.8) {
+                            // If tooltip is too tall, add a class to enable scrolling
+                            box.classList.add('scrollable-tooltip');
+                        }
+                    }
                 }
             });
 
-            // Create tippy instance
-            setTimeout(() => {
-                // Create new instance on the marker element
-                window.tippyInstances = window.tippyInstances || {};
-                window.tippyInstances[id] = tippy(marker, {
-                    content: tooltipContent,
-                    allowHTML: true,
-                    interactive: true,
-                    theme: 'light',
-                    placement: 'top',
-                    trigger: 'manual',
-                    appendTo: document.body,
-                    showOnCreate: true,
-                    hideOnClick: false,
-                    offset: [0, 15],
-                    distance: 15,
-                    arrow: true,
-                    popperOptions: {
-                        strategy: 'fixed',
-                        modifiers: [
-                            {
-                                name: 'preventOverflow',
-                                options: {
-                                    boundary: 'viewport',
-                                    padding: 10,
-                                    altAxis: true
-                                }
-                            },
-                            {
-                                name: 'flip',
-                                options: {
-                                    fallbackPlacements: ['bottom', 'right', 'left'],
-                                    padding: 10
-                                }
-                            }
-                        ]
-                    },
-                    interactiveBorder: 30,
-                    zIndex: 3000,
-                    maxWidth: 350,
-                    // Add these properties for scrollable tooltips
-                    animation: 'shift-away',
-                    onMount(instance) {
-                        // Check if tooltip content is taller than viewport
-                        const box = instance.popper.querySelector('.tippy-box');
-                        if (box) {
-                            const viewportHeight = window.innerHeight;
-                            const tooltipHeight = box.offsetHeight;
-
-                            if (tooltipHeight > viewportHeight * 0.8) {
-                                // If tooltip is too tall, add a class to enable scrolling
-                                box.classList.add('scrollable-tooltip');
-                            }
-                        }
-                    }
-                });
-
-                // Show the tooltip
-                if (window.tippyInstances[id] && window.tippyInstances[id].show) {
-                    window.tippyInstances[id].show();
-                }
-            }, 0);
-        }
-    });
+            // Show the tooltip
+            if (window.tippyInstances[id] && window.tippyInstances[id].show) {
+                window.tippyInstances[id].show();
+            }
+        }, 0);
+    }
 
     // Change cursor on polygon hover
     map.on('mouseenter', 'location-polygons', function (e) {
@@ -2801,3 +3038,224 @@ function initInstructionTabs() {
 document.addEventListener('DOMContentLoaded', function() {
     initInstructionTabs();
 });
+
+// Add a direct approach to highlight the polygon without relying on the map source
+function directHighlightPolygon(map, index) {
+    console.log(`Direct highlighting polygon with index: ${index}`);
+    
+    try {
+        // Ensure map has required layers
+        const layersEnsured = ensureMapLayers(map);
+        if (!layersEnsured) {
+            console.error("Could not ensure map layers, aborting direct highlight");
+            return;
+        }
+        
+        // Set the paint properties directly without modifying the source data
+        map.setPaintProperty('location-polygons', 'fill-opacity', [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            5, [
+                'case',
+                ['==', ['get', 'id'], index],
+                0.9,  // highlighted opacity
+                0.01  // default opacity at zoom level 5
+            ],
+            8, [
+                'case',
+                ['==', ['get', 'id'], index],
+                0.9,  // highlighted opacity
+                0.3   // default opacity at zoom level 8
+            ],
+            11, [
+                'case',
+                ['==', ['get', 'id'], index],
+                0.9,  // highlighted opacity
+                0.8   // default opacity at zoom level 11
+            ],
+            13, [
+                'case',
+                ['==', ['get', 'id'], index],
+                0.9,  // highlighted opacity
+                0.3   // default opacity at zoom level 13
+            ],
+            15, [
+                'case',
+                ['==', ['get', 'id'], index],
+                0.9,  // highlighted opacity
+                0.08  // default opacity at zoom level 15
+            ]
+        ]);
+
+        // Update stroke color and width for highlighted polygon
+        map.setPaintProperty('location-polygons-outline', 'line-color', [
+            'case',
+            ['==', ['get', 'id'], index],
+            '#000000', // black stroke for highlighted
+            ['get', 'strokeColor'] // default stroke color
+        ]);
+
+        map.setPaintProperty('location-polygons-outline', 'line-width', [
+            'case',
+            ['==', ['get', 'id'], index],
+            8,    // highlighted width - increased from 5 to 8
+            2     // default width
+        ]);
+        
+        console.log(`Successfully updated polygon styles for index ${index}`);
+        
+        // Remove highlight from all pins
+        document.querySelectorAll('.map-pin').forEach(pin => {
+            pin.classList.remove('highlighted');
+        });
+
+        // Add highlight to the selected pin if it exists
+        locationMarkers.forEach(marker => {
+            if (marker.id === index) {
+                const pinElement = marker.marker.getElement().querySelector('.map-pin');
+                if (pinElement) {
+                    pinElement.classList.add('highlighted');
+                    console.log(`Added highlighted class to pin with id ${index}`);
+                }
+            }
+        });
+
+        // Remove highlight from all cards
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('highlighted-card'));
+
+        // Add highlight to selected card
+        const selectedCard = document.querySelector(`.card[data-index="${index}"]`);
+        if (selectedCard) {
+            selectedCard.classList.add('highlighted-card');
+            console.log(`Added highlighted-card class to card with data-index ${index}`);
+            
+            // Scroll the card into view if it's visible
+            if (selectedCard.style.display !== 'none') {
+                selectedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    } catch (error) {
+        console.error('Error in directHighlightPolygon:', error);
+    }
+}
+
+// Add a function to ensure the map has the required layers
+function ensureMapLayers(map) {
+    if (!map) return false;
+    
+    try {
+        // Check if the map has the required layers
+        const hasPolygonLayer = map.getLayer('location-polygons');
+        const hasOutlineLayer = map.getLayer('location-polygons-outline');
+        
+        // If layers don't exist, try to add them
+        if (!hasPolygonLayer || !hasOutlineLayer) {
+            console.log("Required layers not found, attempting to add them");
+            
+            // Check if the source exists
+            const hasSource = map.getSource('locations');
+            
+            if (!hasSource) {
+                console.log("Source 'locations' not found, attempting to add it");
+                
+                // Create features
+                const features = updateFeatures(true);
+                
+                // Add source
+                map.addSource('locations', {
+                    type: 'geojson',
+                    data: {
+                        type: 'FeatureCollection',
+                        features: features
+                    }
+                });
+            }
+            
+            // Add polygon layer if it doesn't exist
+            if (!hasPolygonLayer) {
+                console.log("Adding 'location-polygons' layer");
+                map.addLayer({
+                    id: 'location-polygons',
+                    type: 'fill',
+                    source: 'locations',
+                    paint: {
+                        'fill-color': ['get', 'fillColor'],
+                        'fill-opacity': [
+                            'interpolate',
+                            ['linear'],
+                            ['zoom'],
+                            5, 0.01,   // At zoom level 5, opacity is 1%
+                            8, 0.3,    // At zoom level 8, opacity is 30%
+                            11, 0.8,   // At zoom level 11, opacity peaks at 80%
+                            13, 0.3,   // At zoom level 13, opacity decreases to 30%
+                            15, 0.08   // At zoom level 15, opacity is 8%
+                        ]
+                    }
+                });
+            }
+            
+            // Add outline layer if it doesn't exist
+            if (!hasOutlineLayer) {
+                console.log("Adding 'location-polygons-outline' layer");
+                map.addLayer({
+                    id: 'location-polygons-outline',
+                    type: 'line',
+                    source: 'locations',
+                    paint: {
+                        'line-color': ['get', 'strokeColor'],
+                        'line-width': 2
+                    }
+                });
+            }
+            
+            return true;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error("Error ensuring map layers:", error);
+        return false;
+    }
+}
+
+// Add a simpler direct highlight function that doesn't rely on the map source
+function simpleHighlightPolygon(map, index) {
+    console.log(`Simple highlighting polygon with index: ${index}`);
+    
+    try {
+        // Just highlight the card and pin without touching the map
+        // Remove highlight from all pins
+        document.querySelectorAll('.map-pin').forEach(pin => {
+            pin.classList.remove('highlighted');
+        });
+
+        // Add highlight to the selected pin if it exists
+        locationMarkers.forEach(marker => {
+            if (marker.id === index) {
+                const pinElement = marker.marker.getElement().querySelector('.map-pin');
+                if (pinElement) {
+                    pinElement.classList.add('highlighted');
+                    console.log(`Added highlighted class to pin with id ${index}`);
+                }
+            }
+        });
+
+        // Remove highlight from all cards
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('highlighted-card'));
+
+        // Add highlight to selected card
+        const selectedCard = document.querySelector(`.card[data-index="${index}"]`);
+        if (selectedCard) {
+            selectedCard.classList.add('highlighted-card');
+            console.log(`Added highlighted-card class to card with data-index ${index}`);
+            
+            // Scroll the card into view if it's visible
+            if (selectedCard.style.display !== 'none') {
+                selectedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    } catch (error) {
+        console.error('Error in simpleHighlightPolygon:', error);
+    }
+}
