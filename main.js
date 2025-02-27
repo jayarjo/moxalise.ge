@@ -150,7 +150,13 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange,
 
         const item = document.createElement('div');
         item.className = 'custom-dropdown-item';
-        item.setAttribute('data-value', option);
+        
+        // If we have a special mapping, store both the display value and the actual value
+        const displayValue = option;
+        const actualValue = (specialMapping && specialMapping[option]) || option;
+        
+        item.setAttribute('data-value', actualValue);
+        item.setAttribute('data-display-value', displayValue);
 
         // Add checkbox for multi-select
         const checkbox = document.createElement('input');
@@ -214,6 +220,15 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange,
         
         // Also set a custom attribute to ensure the value is accessible
         originalSelect.setAttribute('data-selected-values', valuesArray.join(','));
+        
+        // Add special debug for updates filter
+        if (elementId === 'updatesFilter') {
+            console.log('Updates filter values set:', {
+                values: valuesArray,
+                attribute: originalSelect.getAttribute('data-selected-values'),
+                selectValue: originalSelect.value
+            });
+        }
         
         // Trigger change event on original select
         const event = new Event('change');
@@ -300,20 +315,26 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange,
             if (e.target.type === 'checkbox') return;
             
             const checkbox = item.querySelector('.custom-dropdown-checkbox');
-            const displayValue = item.getAttribute('data-value');
+            const actualValue = item.getAttribute('data-value');
             
             // Toggle checkbox
             checkbox.checked = !checkbox.checked;
             
-            // Use special mapping if provided, otherwise use the display value
-            const actualValue = (specialMapping && displayValue && specialMapping[displayValue]) || displayValue;
+            // Debug for updates filter
+            if (elementId === 'updatesFilter') {
+                console.log('Updates filter item clicked:', {
+                    displayValue: item.getAttribute('data-display-value'),
+                    actualValue: actualValue,
+                    checked: checkbox.checked
+                });
+            }
             
             // Update selected values
             if (checkbox.checked) {
-                selectedValues.add(displayValue);
+                selectedValues.add(actualValue);
                 item.classList.add('selected');
             } else {
-                selectedValues.delete(displayValue);
+                selectedValues.delete(actualValue);
                 item.classList.remove('selected');
             }
             
@@ -332,14 +353,23 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange,
         // Handle checkbox click
         const checkbox = item.querySelector('.custom-dropdown-checkbox');
         checkbox.addEventListener('change', () => {
-            const displayValue = item.getAttribute('data-value');
+            const actualValue = item.getAttribute('data-value');
+            
+            // Debug for updates filter
+            if (elementId === 'updatesFilter') {
+                console.log('Updates filter checkbox changed:', {
+                    displayValue: item.getAttribute('data-display-value'),
+                    actualValue: actualValue,
+                    checked: checkbox.checked
+                });
+            }
             
             // Update selected values
             if (checkbox.checked) {
-                selectedValues.add(displayValue);
+                selectedValues.add(actualValue);
                 item.classList.add('selected');
             } else {
-                selectedValues.delete(displayValue);
+                selectedValues.delete(actualValue);
                 item.classList.remove('selected');
             }
             
@@ -437,12 +467,14 @@ function updateFeatures(filtered = false) {
     const villageElement = document.getElementById('villageFilter');
     const priorityElement = document.getElementById('priorityFilter');
     const statusElement = document.getElementById('statusFilter');
+    const updatesElement = document.getElementById('updatesFilter');
     
     // Get values from data attributes if available, otherwise use the value property
     const selectedDistrict = districtElement.getAttribute('data-selected-values') || districtElement.value;
     const selectedVillage = villageElement.getAttribute('data-selected-values') || villageElement.value;
     const selectedPriority = priorityElement.getAttribute('data-selected-values') || priorityElement.value;
     const selectedStatus = statusElement.getAttribute('data-selected-values') || statusElement.value;
+    const selectedUpdates = updatesElement.getAttribute('data-selected-values') || updatesElement.value;
     
     const searchText = currentSearchText ? currentSearchText.toLowerCase().trim() : '';
 
@@ -451,13 +483,15 @@ function updateFeatures(filtered = false) {
     const selectedVillages = selectedVillage ? selectedVillage.split(',') : [];
     const selectedPriorities = selectedPriority ? selectedPriority.split(',') : [];
     const selectedStatuses = selectedStatus ? selectedStatus.split(',') : [];
+    const selectedUpdateOptions = selectedUpdates ? selectedUpdates.split(',') : [];
 
     // Debug log
     console.log('updateFeatures - Filtering with:', {
         districts: selectedDistricts,
         villages: selectedVillages,
         priorities: selectedPriorities,
-        statuses: selectedStatuses
+        statuses: selectedStatuses,
+        updates: selectedUpdateOptions
     });
 
     // Count all items with coordinates for debugging
@@ -505,6 +539,7 @@ function updateFeatures(filtered = false) {
             const itemVillage = item['სოფელი']?.trim() || '';
             const itemPriority = item['პრიორიტეტი']?.trim() || '';
             const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
+            const itemUpdates = item["განახლებები"]?.trim() || '';
 
             // Check if matches any of the selected values or if no values are selected
             const matchesDistrict = selectedDistricts.length === 0 || selectedDistricts.includes(itemDistrict);
@@ -515,6 +550,32 @@ function updateFeatures(filtered = false) {
             const matchesStatus = selectedStatuses.length === 0 || 
                 (selectedStatuses.includes("EMPTY_STATUS") && itemStatus === '') || 
                 selectedStatuses.includes(itemStatus);
+                
+            // Special handling for updates filter - fixed logic
+            let matchesUpdates = selectedUpdateOptions.length === 0; // Default if no options selected
+            
+            if (!matchesUpdates) {
+                // Check each selected option
+                for (const option of selectedUpdateOptions) {
+                    if (option === "HAS_UPDATES" && itemUpdates !== '') {
+                        matchesUpdates = true;
+                        break;
+                    }
+                    if (option === "NO_UPDATES" && itemUpdates === '') {
+                        matchesUpdates = true;
+                        break;
+                    }
+                    // Also check for direct matches with display values (fallback)
+                    if (option === "აქვს განახლება" && itemUpdates !== '') {
+                        matchesUpdates = true;
+                        break;
+                    }
+                    if (option === "არ აქვს განახლება" && itemUpdates === '') {
+                        matchesUpdates = true;
+                        break;
+                    }
+                }
+            }
 
             // Check if the item matches the search text
             const matchesSearch = !searchText || Object.values(item).some(value => {
@@ -522,7 +583,7 @@ function updateFeatures(filtered = false) {
                 return String(value).toLowerCase().includes(searchText);
             });
 
-            return matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch;
+            return matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesUpdates && matchesSearch;
         });
     } else {
         // If not filtering, include all items with coordinates
@@ -897,6 +958,7 @@ function initializeFilters(data) {
     const villageSelect = document.getElementById('villageFilter');
     const prioritySelect = document.getElementById('priorityFilter');
     const statusSelect = document.getElementById('statusFilter');
+    const updatesSelect = document.getElementById('updatesFilter');
 
     // Clear existing options (except the first one)
     while (districtSelect.options.length > 1) {
@@ -913,6 +975,10 @@ function initializeFilters(data) {
 
     while (statusSelect.options.length > 1) {
         statusSelect.remove(1);
+    }
+    
+    while (updatesSelect.options.length > 1) {
+        updatesSelect.remove(1);
     }
 
     // Populate native select elements first (they'll be hidden but still used for values)
@@ -950,6 +1016,17 @@ function initializeFilters(data) {
         option.textContent = status;
         statusSelect.appendChild(option);
     });
+    
+    // Add options for updates filter
+    const hasUpdatesOption = document.createElement('option');
+    hasUpdatesOption.value = "HAS_UPDATES";
+    hasUpdatesOption.textContent = "აქვს განახლება";
+    updatesSelect.appendChild(hasUpdatesOption);
+    
+    const noUpdatesOption = document.createElement('option');
+    noUpdatesOption.value = "NO_UPDATES";
+    noUpdatesOption.textContent = "არ აქვს განახლება";
+    updatesSelect.appendChild(noUpdatesOption);
 
     // Calculate counts for each option
     const districtCounts = countFieldValues(data, 'რაიონი');
@@ -965,6 +1042,21 @@ function initializeFilters(data) {
         } else {
             // Count empty status
             statusCounts["EMPTY_STATUS"] = (statusCounts["EMPTY_STATUS"] || 0) + 1;
+        }
+    });
+    
+    // Count items with and without updates
+    const updatesCounts = {
+        "აქვს განახლება": 0,
+        "არ აქვს განახლება": 0
+    };
+    
+    data.forEach(item => {
+        const updates = item["განახლებები"]?.trim() || '';
+        if (updates) {
+            updatesCounts["აქვს განახლება"]++;
+        } else {
+            updatesCounts["არ აქვს განახლება"]++;
         }
     });
 
@@ -998,12 +1090,29 @@ function initializeFilters(data) {
         null,
         { 'უცნობი სტატუსი': 'EMPTY_STATUS' } // Add special value mapping
     );
+    
+    customDropdowns.updates = createCustomDropdown(
+        'updatesFilter',
+        ['აქვს განახლება', 'არ აქვს განახლება'],
+        updatesCounts,
+        'ყველა განახლება',
+        null,
+        { 'აქვს განახლება': 'HAS_UPDATES', 'არ აქვს განახლება': 'NO_UPDATES' }
+    );
 
     // Add filter change handlers to the native selects (already connected via createCustomDropdown)
     districtSelect.addEventListener('change', applyFilters);
     villageSelect.addEventListener('change', applyFilters);
     prioritySelect.addEventListener('change', applyFilters);
     statusSelect.addEventListener('change', applyFilters);
+    updatesSelect.addEventListener('change', applyFilters);
+    
+    // Debug the initial state of the updates filter
+    console.log('Updates filter initialized with options:', {
+        hasUpdates: 'HAS_UPDATES',
+        noUpdates: 'NO_UPDATES',
+        counts: updatesCounts
+    });
 }
 
 // Update applyFilters function with search functionality
@@ -1015,19 +1124,22 @@ function applyFilters() {
     const villageElement = document.getElementById('villageFilter');
     const priorityElement = document.getElementById('priorityFilter');
     const statusElement = document.getElementById('statusFilter');
+    const updatesElement = document.getElementById('updatesFilter');
     
     // Get values from data attributes if available, otherwise use the value property
     const selectedDistrict = districtElement.getAttribute('data-selected-values') || districtElement.value;
     const selectedVillage = villageElement.getAttribute('data-selected-values') || villageElement.value;
     const selectedPriority = priorityElement.getAttribute('data-selected-values') || priorityElement.value;
     const selectedStatus = statusElement.getAttribute('data-selected-values') || statusElement.value;
+    const selectedUpdates = updatesElement.getAttribute('data-selected-values') || updatesElement.value;
     
     // Debug raw values from select elements
     console.log('Raw filter values:', {
         district: selectedDistrict,
         village: selectedVillage,
         priority: selectedPriority,
-        status: selectedStatus
+        status: selectedStatus,
+        updates: selectedUpdates
     });
     
     const searchText = currentSearchText.toLowerCase().trim();
@@ -1037,30 +1149,13 @@ function applyFilters() {
     const selectedVillages = selectedVillage ? selectedVillage.split(',') : [];
     const selectedPriorities = selectedPriority ? selectedPriority.split(',') : [];
     const selectedStatuses = selectedStatus ? selectedStatus.split(',') : [];
+    const selectedUpdateOptions = selectedUpdates ? selectedUpdates.split(',') : [];
 
     console.log('Selected Districts:', selectedDistricts);
     console.log('Selected Villages:', selectedVillages);
     console.log('Selected Priorities:', selectedPriorities);
     console.log('Selected Statuses:', selectedStatuses);
-
-    // Debug: Count total items that should match each priority
-    if (selectedPriorities.length > 0) {
-        const priorityMatchCounts = {};
-        selectedPriorities.forEach(priority => {
-            priorityMatchCounts[priority] = 0;
-        });
-        
-        // Count items for each priority
-        sampleData.forEach(item => {
-            const itemPriority = item['პრიორიტეტი']?.trim() || '';
-            if (selectedPriorities.includes(itemPriority)) {
-                priorityMatchCounts[itemPriority] = (priorityMatchCounts[itemPriority] || 0) + 1;
-            }
-        });
-        
-        console.log('Priority match counts:', priorityMatchCounts);
-        console.log('Total items matching any priority:', Object.values(priorityMatchCounts).reduce((a, b) => a + b, 0));
-    }
+    console.log('Selected Update Options:', selectedUpdateOptions);
 
     // Filter cards
     let visibleCardCount = 0;
@@ -1073,6 +1168,7 @@ function applyFilters() {
         const itemVillage = item['სოფელი']?.trim() || '';
         const itemPriority = item['პრიორიტეტი']?.trim() || '';
         const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
+        const itemUpdates = item["განახლებები"]?.trim() || '';
 
         // Check if matches any of the selected values or if no values are selected
         const matchesDistrict = selectedDistricts.length === 0 || selectedDistricts.includes(itemDistrict);
@@ -1083,6 +1179,37 @@ function applyFilters() {
         const matchesStatus = selectedStatuses.length === 0 || 
             (selectedStatuses.includes("EMPTY_STATUS") && itemStatus === '') || 
             selectedStatuses.includes(itemStatus);
+            
+        // Special handling for updates filter - fixed logic
+        let matchesUpdates = selectedUpdateOptions.length === 0; // Default if no options selected
+        
+        if (!matchesUpdates) {
+            // Check each selected option
+            for (const option of selectedUpdateOptions) {
+                if (option === "HAS_UPDATES" && itemUpdates !== '') {
+                    matchesUpdates = true;
+                    break;
+                }
+                if (option === "NO_UPDATES" && itemUpdates === '') {
+                    matchesUpdates = true;
+                    break;
+                }
+                // Also check for direct matches with display values (fallback)
+                if (option === "აქვს განახლება" && itemUpdates !== '') {
+                    matchesUpdates = true;
+                    break;
+                }
+                if (option === "არ აქვს განახლება" && itemUpdates === '') {
+                    matchesUpdates = true;
+                    break;
+                }
+            }
+        }
+        
+        // Debug updates filter for a sample of items
+        if (index < 5) {
+            console.log(`Item ${index} updates: "${itemUpdates}", matches: ${matchesUpdates}, options: ${selectedUpdateOptions}`);
+        }
 
         // Check if the item matches the search text
         const matchesSearch = !searchText || Object.values(item).some(value => {
@@ -1090,7 +1217,7 @@ function applyFilters() {
             return String(value).toLowerCase().includes(searchText);
         });
 
-        const isVisible = matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch;
+        const isVisible = matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesUpdates && matchesSearch;
         card.style.display = isVisible ? 'block' : 'none';
         
         if (isVisible) {
@@ -1108,6 +1235,7 @@ function applyFilters() {
         const propertyVillage = properties['სოფელი']?.trim() || '';
         const propertyPriority = properties['პრიორიტეტი']?.trim() || '';
         const propertyStatus = properties["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
+        const propertyUpdates = properties["განახლებები"]?.trim() || '';
 
         // Check if matches any of the selected values or if no values are selected
         const matchesDistrict = selectedDistricts.length === 0 || selectedDistricts.includes(propertyDistrict);
@@ -1118,6 +1246,32 @@ function applyFilters() {
         const matchesStatus = selectedStatuses.length === 0 || 
             (selectedStatuses.includes("EMPTY_STATUS") && propertyStatus === '') || 
             selectedStatuses.includes(propertyStatus);
+            
+        // Special handling for updates filter - fixed logic
+        let matchesUpdates = selectedUpdateOptions.length === 0; // Default if no options selected
+        
+        if (!matchesUpdates) {
+            // Check each selected option
+            for (const option of selectedUpdateOptions) {
+                if (option === "HAS_UPDATES" && propertyUpdates !== '') {
+                    matchesUpdates = true;
+                    break;
+                }
+                if (option === "NO_UPDATES" && propertyUpdates === '') {
+                    matchesUpdates = true;
+                    break;
+                }
+                // Also check for direct matches with display values (fallback)
+                if (option === "აქვს განახლება" && propertyUpdates !== '') {
+                    matchesUpdates = true;
+                    break;
+                }
+                if (option === "არ აქვს განახლება" && propertyUpdates === '') {
+                    matchesUpdates = true;
+                    break;
+                }
+            }
+        }
 
         // Check if the properties match the search text
         const matchesSearch = !searchText || Object.values(properties).some(value => {
@@ -1125,7 +1279,7 @@ function applyFilters() {
             return String(value).toLowerCase().includes(searchText);
         });
 
-        const isVisible = matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch;
+        const isVisible = matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesUpdates && matchesSearch;
         marker.getElement().style.display = isVisible ? 'block' : 'none';
         
         if (isVisible) {
@@ -1146,6 +1300,7 @@ function applyFilters() {
         const itemVillage = item['სოფელი']?.trim() || '';
         const itemPriority = item['პრიორიტეტი']?.trim() || '';
         const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
+        const itemUpdates = item["განახლებები"]?.trim() || '';
 
         // Check if matches any of the selected values or if no values are selected
         const matchesDistrict = selectedDistricts.length === 0 || selectedDistricts.includes(itemDistrict);
@@ -1156,6 +1311,32 @@ function applyFilters() {
         const matchesStatus = selectedStatuses.length === 0 || 
             (selectedStatuses.includes("EMPTY_STATUS") && itemStatus === '') || 
             selectedStatuses.includes(itemStatus);
+            
+        // Special handling for updates filter - fixed logic
+        let matchesUpdates = selectedUpdateOptions.length === 0; // Default if no options selected
+        
+        if (!matchesUpdates) {
+            // Check each selected option
+            for (const option of selectedUpdateOptions) {
+                if (option === "HAS_UPDATES" && itemUpdates !== '') {
+                    matchesUpdates = true;
+                    break;
+                }
+                if (option === "NO_UPDATES" && itemUpdates === '') {
+                    matchesUpdates = true;
+                    break;
+                }
+                // Also check for direct matches with display values (fallback)
+                if (option === "აქვს განახლება" && itemUpdates !== '') {
+                    matchesUpdates = true;
+                    break;
+                }
+                if (option === "არ აქვს განახლება" && itemUpdates === '') {
+                    matchesUpdates = true;
+                    break;
+                }
+            }
+        }
 
         // Check if the item matches the search text
         const matchesSearch = !searchText || Object.values(item).some(value => {
@@ -1163,7 +1344,7 @@ function applyFilters() {
             return String(value).toLowerCase().includes(searchText);
         });
 
-        return matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch;
+        return matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesUpdates && matchesSearch;
     });
     
     console.log(`Filtered data for map: ${filteredData.length} items`);
