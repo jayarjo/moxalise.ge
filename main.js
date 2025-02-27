@@ -102,6 +102,18 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange,
     const menu = document.createElement('div');
     menu.className = 'custom-dropdown-menu';
 
+    // Add search input at the top of the dropdown
+    const searchContainer = document.createElement('div');
+    searchContainer.className = 'custom-dropdown-search';
+    
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.className = 'custom-dropdown-search-input';
+    searchInput.placeholder = 'ძიება...';
+    
+    searchContainer.appendChild(searchInput);
+    menu.appendChild(searchContainer);
+
     // Calculate the maximum count for scaling the distribution bars
     const maxCount = Math.max(...Object.values(counts));
 
@@ -140,6 +152,11 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange,
         item.className = 'custom-dropdown-item';
         item.setAttribute('data-value', option);
 
+        // Add checkbox for multi-select
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'custom-dropdown-checkbox';
+        
         const label = document.createElement('span');
         label.className = 'custom-dropdown-item-label';
         label.textContent = option;
@@ -156,6 +173,7 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange,
         bar.style.width = `${percentage}%`;
 
         distribution.appendChild(bar);
+        item.appendChild(checkbox);
         item.appendChild(label);
         item.appendChild(countSpan);
         item.appendChild(distribution);
@@ -169,6 +187,42 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange,
     // Insert the custom dropdown after the original select
     parentContainer.insertBefore(dropdownContainer, originalSelect.nextSibling);
 
+    // Store selected values
+    const selectedValues = new Set();
+    
+    // Function to update the header text based on selections
+    const updateHeaderText = () => {
+        if (selectedValues.size === 0) {
+            selectedText.textContent = placeholder;
+        } else if (selectedValues.size === 1) {
+            selectedText.textContent = Array.from(selectedValues)[0];
+        } else {
+            selectedText.textContent = `${placeholder} (${selectedValues.size})`;
+        }
+    };
+
+    // Function to update the original select's value
+    const updateOriginalSelect = () => {
+        // Convert Set to array and join with comma
+        const valuesArray = Array.from(selectedValues);
+        
+        // Debug log to check what values are being set
+        console.log(`Setting ${elementId} value to:`, valuesArray);
+        
+        // Set the value on the original select element
+        originalSelect.value = valuesArray.join(',');
+        
+        // Also set a custom attribute to ensure the value is accessible
+        originalSelect.setAttribute('data-selected-values', valuesArray.join(','));
+        
+        // Trigger change event on original select
+        const event = new Event('change');
+        originalSelect.dispatchEvent(event);
+        
+        // Call onChange callback if provided
+        if (onChange) onChange(valuesArray);
+    };
+
     // Add event listeners
     header.addEventListener('click', () => {
         dropdownContainer.classList.toggle('open');
@@ -179,6 +233,11 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange,
                 dropdown.classList.remove('open');
             }
         });
+        
+        // Focus search input when dropdown opens
+        if (dropdownContainer.classList.contains('open')) {
+            searchInput.focus();
+        }
     });
 
     // Handle clicking outside the dropdown
@@ -188,47 +247,161 @@ function createCustomDropdown(elementId, options, counts, placeholder, onChange,
         }
     });
 
-    // Handle item selection
-    menu.querySelectorAll('.custom-dropdown-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const displayValue = item.getAttribute('data-value');
-            selectedText.textContent = displayValue || placeholder;
+    // Handle search input
+    searchInput.addEventListener('input', (e) => {
+        const searchValue = e.target.value.toLowerCase().trim();
+        
+        // Skip the first item (All option)
+        const items = menu.querySelectorAll('.custom-dropdown-item:not(:nth-child(2))');
+        
+        items.forEach(item => {
+            const itemText = item.querySelector('.custom-dropdown-item-label').textContent.toLowerCase();
+            if (searchValue === '' || itemText.includes(searchValue)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
 
+    // Prevent search input from closing dropdown when clicked
+    searchInput.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+
+    // Handle "All" option selection
+    allItem.addEventListener('click', () => {
+        // Clear all selections
+        selectedValues.clear();
+        
+        // Uncheck all checkboxes
+        menu.querySelectorAll('.custom-dropdown-checkbox').forEach(cb => {
+            cb.checked = false;
+        });
+        
+        // Update selected styling
+        menu.querySelectorAll('.custom-dropdown-item').forEach(i => {
+            i.classList.remove('selected');
+        });
+        allItem.classList.add('selected');
+        
+        // Update header and original select
+        updateHeaderText();
+        updateOriginalSelect();
+        
+        // Close dropdown
+        dropdownContainer.classList.remove('open');
+    });
+
+    // Handle item selection
+    menu.querySelectorAll('.custom-dropdown-item:not(:nth-child(2))').forEach(item => {
+        item.addEventListener('click', (e) => {
+            // Don't handle clicks on the checkbox itself (it will handle its own state)
+            if (e.target.type === 'checkbox') return;
+            
+            const checkbox = item.querySelector('.custom-dropdown-checkbox');
+            const displayValue = item.getAttribute('data-value');
+            
+            // Toggle checkbox
+            checkbox.checked = !checkbox.checked;
+            
             // Use special mapping if provided, otherwise use the display value
             const actualValue = (specialMapping && displayValue && specialMapping[displayValue]) || displayValue;
-
-            // Update original select value
-            originalSelect.value = actualValue;
-
-            // Update selected item styling
-            menu.querySelectorAll('.custom-dropdown-item').forEach(i => {
-                i.classList.remove('selected');
-            });
-            item.classList.add('selected');
-
-            // Close dropdown
-            dropdownContainer.classList.remove('open');
-
-            // Trigger change event on original select
-            const event = new Event('change');
-            originalSelect.dispatchEvent(event);
-
-            // Call onChange callback
-            if (onChange) onChange(actualValue);
+            
+            // Update selected values
+            if (checkbox.checked) {
+                selectedValues.add(displayValue);
+                item.classList.add('selected');
+            } else {
+                selectedValues.delete(displayValue);
+                item.classList.remove('selected');
+            }
+            
+            // If any item is selected, deselect "All" option
+            if (selectedValues.size > 0) {
+                allItem.classList.remove('selected');
+            } else {
+                allItem.classList.add('selected');
+            }
+            
+            // Update header text and original select
+            updateHeaderText();
+            updateOriginalSelect();
+        });
+        
+        // Handle checkbox click
+        const checkbox = item.querySelector('.custom-dropdown-checkbox');
+        checkbox.addEventListener('change', () => {
+            const displayValue = item.getAttribute('data-value');
+            
+            // Update selected values
+            if (checkbox.checked) {
+                selectedValues.add(displayValue);
+                item.classList.add('selected');
+            } else {
+                selectedValues.delete(displayValue);
+                item.classList.remove('selected');
+            }
+            
+            // If any item is selected, deselect "All" option
+            if (selectedValues.size > 0) {
+                allItem.classList.remove('selected');
+            } else {
+                allItem.classList.add('selected');
+            }
+            
+            // Update header text and original select
+            updateHeaderText();
+            updateOriginalSelect();
         });
     });
 
     return {
         container: dropdownContainer,
         setValue: (value) => {
-            const items = menu.querySelectorAll('.custom-dropdown-item');
-            items.forEach(item => {
-                if (item.getAttribute('data-value') === value) {
-                    item.click();
-                }
+            // Handle comma-separated values for multi-select
+            const values = value ? value.split(',') : [];
+            
+            // Clear existing selections
+            selectedValues.clear();
+            menu.querySelectorAll('.custom-dropdown-checkbox').forEach(cb => {
+                cb.checked = false;
             });
+            menu.querySelectorAll('.custom-dropdown-item').forEach(i => {
+                i.classList.remove('selected');
+            });
+            
+            if (values.length === 0) {
+                // Select "All" option
+                allItem.classList.add('selected');
+            } else {
+                // Select specified values
+                values.forEach(val => {
+                    const items = menu.querySelectorAll('.custom-dropdown-item');
+                    items.forEach(item => {
+                        if (item.getAttribute('data-value') === val) {
+                            const checkbox = item.querySelector('.custom-dropdown-checkbox');
+                            if (checkbox) {
+                                checkbox.checked = true;
+                                item.classList.add('selected');
+                                selectedValues.add(val);
+                            }
+                        }
+                    });
+                });
+                
+                // Deselect "All" option if any values are selected
+                if (selectedValues.size > 0) {
+                    allItem.classList.remove('selected');
+                }
+            }
+            
+            // Update header text
+            updateHeaderText();
         },
-        getValue: () => originalSelect.value
+        getValue: () => {
+            return Array.from(selectedValues).join(',');
+        }
     };
 }
 
@@ -259,75 +432,148 @@ function toggleLegend() {
 
 // Function to update features based on current zoom
 function updateFeatures(filtered = false) {
-    // Group points by location (only for non-exact locations)
-    const locationGroups = {};
-    const selectedDistrict = document.getElementById('districtFilter').value;
-    const selectedVillage = document.getElementById('villageFilter').value;
-    const selectedPriority = document.getElementById('priorityFilter').value;
-    const selectedStatus = document.getElementById('statusFilter').value;
+    // First filter the data based on the selected criteria
+    const districtElement = document.getElementById('districtFilter');
+    const villageElement = document.getElementById('villageFilter');
+    const priorityElement = document.getElementById('priorityFilter');
+    const statusElement = document.getElementById('statusFilter');
+    
+    // Get values from data attributes if available, otherwise use the value property
+    const selectedDistrict = districtElement.getAttribute('data-selected-values') || districtElement.value;
+    const selectedVillage = villageElement.getAttribute('data-selected-values') || villageElement.value;
+    const selectedPriority = priorityElement.getAttribute('data-selected-values') || priorityElement.value;
+    const selectedStatus = statusElement.getAttribute('data-selected-values') || statusElement.value;
+    
     const searchText = currentSearchText ? currentSearchText.toLowerCase().trim() : '';
 
-    sampleData.forEach((item, index) => {
-        if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
-            // Apply filters
-            if (filtered) {
-                const itemDistrict = item['რაიონი']?.trim() || '';
-                const itemVillage = item['სოფელი']?.trim() || '';
+    // Parse comma-separated values for multi-select
+    const selectedDistricts = selectedDistrict ? selectedDistrict.split(',') : [];
+    const selectedVillages = selectedVillage ? selectedVillage.split(',') : [];
+    const selectedPriorities = selectedPriority ? selectedPriority.split(',') : [];
+    const selectedStatuses = selectedStatus ? selectedStatus.split(',') : [];
+
+    // Debug log
+    console.log('updateFeatures - Filtering with:', {
+        districts: selectedDistricts,
+        villages: selectedVillages,
+        priorities: selectedPriorities,
+        statuses: selectedStatuses
+    });
+
+    // Count all items with coordinates for debugging
+    const itemsWithCoordinates = sampleData.filter(item => 
+        item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()
+    ).length;
+    console.log(`Total items with coordinates: ${itemsWithCoordinates}`);
+
+    // Count items for each priority value for debugging
+    if (selectedPriorities.length > 0) {
+        console.log('Priority filter analysis:');
+        const priorityCounts = {};
+        
+        // Initialize counts for selected priorities
+        selectedPriorities.forEach(p => {
+            priorityCounts[p] = 0;
+        });
+        
+        // Count items for each selected priority
+        sampleData.forEach(item => {
+            if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
                 const itemPriority = item['პრიორიტეტი']?.trim() || '';
-                const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
-
-                // Special handling for empty status
-                const matchesStatus = !selectedStatus ||
-                    (selectedStatus === "EMPTY_STATUS" && itemStatus === '') ||
-                    itemStatus === selectedStatus;
-
-                const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
-                const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
-                const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
-
-                // Check if the item matches the search text
-                const matchesSearch = !searchText || Object.values(item).some(value => {
-                    if (value === null || value === undefined) return false;
-                    return String(value).toLowerCase().includes(searchText);
-                });
-
-                if (!matchesDistrict || !matchesVillage || !matchesPriority || !matchesStatus || !matchesSearch) return;
+                if (selectedPriorities.includes(itemPriority)) {
+                    priorityCounts[itemPriority] = (priorityCounts[itemPriority] || 0) + 1;
+                }
             }
+        });
+        
+        console.log('Items per priority:', priorityCounts);
+        console.log('Total items matching any selected priority:', Object.values(priorityCounts).reduce((a, b) => a + b, 0));
+    }
 
-            let color;
-            const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
-            const priority = item["პრიორიტეტი"]?.trim();
-
-            // Check if priority is filled and status is not "აღმოუჩინეს დახმარება"
-            if (priority && status !== "აღმოუჩინეს დახმარება") {
-                color = '#000000'; // Black for priority items not completed
-            } else if (status === "მომლოდინე") {
-                color = '#e74c3c'; // Red
-            } else if (status === "აღმოუჩინეს დახმარება" || status === "აღმოუჩინეს დახმარება") {
-                color = '#2ecc71'; // Green
-            } else if (status === "მიდის მოხალისე") {
-                color = '#3498db'; // Blue
-            } else if (status === "მოინახულა მოხალისემ") {
-                color = '#9b59b6'; // Purple
-            } else {
-                color = '#95a5a6'; // Gray for unknown/empty status
+    // First, filter the data based on criteria
+    let filteredItems = [];
+    
+    if (filtered) {
+        // Create a detailed filter function that logs each step
+        filteredItems = sampleData.filter(item => {
+            // Skip items without coordinates or with exact location
+            if (!item.lat || !item.lon || item["ზუსტი ადგილმდებარეობა"]?.trim()) {
+                return false;
             }
+            
+            const itemDistrict = item['რაიონი']?.trim() || '';
+            const itemVillage = item['სოფელი']?.trim() || '';
+            const itemPriority = item['პრიორიტეტი']?.trim() || '';
+            const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
 
-            const key = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
-            if (!locationGroups[key]) {
-                locationGroups[key] = [];
-            }
-            locationGroups[key].push({
-                item,
-                index,
-                fillColor: color,
-                strokeColor: color
+            // Check if matches any of the selected values or if no values are selected
+            const matchesDistrict = selectedDistricts.length === 0 || selectedDistricts.includes(itemDistrict);
+            const matchesVillage = selectedVillages.length === 0 || selectedVillages.includes(itemVillage);
+            const matchesPriority = selectedPriorities.length === 0 || selectedPriorities.includes(itemPriority);
+            
+            // Special handling for empty status
+            const matchesStatus = selectedStatuses.length === 0 || 
+                (selectedStatuses.includes("EMPTY_STATUS") && itemStatus === '') || 
+                selectedStatuses.includes(itemStatus);
+
+            // Check if the item matches the search text
+            const matchesSearch = !searchText || Object.values(item).some(value => {
+                if (value === null || value === undefined) return false;
+                return String(value).toLowerCase().includes(searchText);
             });
+
+            return matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch;
+        });
+    } else {
+        // If not filtering, include all items with coordinates
+        filteredItems = sampleData.filter(item => 
+            item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()
+        );
+    }
+
+    console.log(`Filtered items count: ${filteredItems.length} out of ${sampleData.length}`);
+
+    // Now group the filtered items by location
+    const locationGroups = {};
+    
+    filteredItems.forEach((item, i) => {
+        // Find the original index in sampleData
+        const index = sampleData.findIndex(d => d === item);
+        
+        let color;
+        const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
+        const priority = item["პრიორიტეტი"]?.trim();
+
+        // Check if priority is filled and status is not "აღმოუჩინეს დახმარება"
+        if (priority && status !== "აღმოუჩინეს დახმარება") {
+            color = '#000000'; // Black for priority items not completed
+        } else if (status === "მომლოდინე") {
+            color = '#e74c3c'; // Red
+        } else if (status === "აღმოუჩინეს დახმარება" || status === "აღმოუჩინეს დახმარება") {
+            color = '#2ecc71'; // Green
+        } else if (status === "მიდის მოხალისე") {
+            color = '#3498db'; // Blue
+        } else if (status === "მოინახულა მოხალისემ") {
+            color = '#9b59b6'; // Purple
+        } else {
+            color = '#95a5a6'; // Gray for unknown/empty status
         }
+
+        const key = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
+        if (!locationGroups[key]) {
+            locationGroups[key] = [];
+        }
+        
+        locationGroups[key].push({
+            item,
+            index,
+            fillColor: color,
+            strokeColor: color
+        });
     });
 
     // Create polygon features
-    return Object.values(locationGroups).flatMap(group => {
+    const features = Object.values(locationGroups).flatMap(group => {
         // For single items, use normal size; for groups make them smaller
         const isGroup = group.length > 1;
         const sizeMultiplier = isGroup ? 0.7 : 1.0; // 30% smaller when in a group
@@ -362,6 +608,9 @@ function updateFeatures(filtered = false) {
             };
         });
     });
+
+    console.log(`Generated ${features.length} polygon features from ${filteredItems.length} filtered items`);
+    return features;
 }
 
 // Add this function before other scripts
@@ -524,37 +773,46 @@ function closeTooltip(id) {
 
 // Add highlightPolygon function before map initialization
 function highlightPolygon(map, index) {
+    if (!map || !map.getLayer('location-polygons') || !map.getLayer('location-polygons-outline')) {
+        console.warn('Map or required layers not found in highlightPolygon');
+        return;
+    }
+
     // Reset all polygons
-    map.setPaintProperty('location-polygons', 'fill-opacity', [
-        'case',
-        ['==', ['get', 'id'], index],
-        0.9, // highlighted opacity
-        [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            5, 0.01,   // At zoom level 5 and below, opacity is 1% (almost invisible)
-            8, 0.3,    // At zoom level 8, opacity is 30%
-            11, 0.8,   // At zoom level 11, opacity peaks at 80%
-            13, 0.3,   // At zoom level 13, opacity decreases to 30%
-            15, 0.08   // At zoom level 15 and above, opacity is 8% (almost invisible again)
-        ]
-    ]);
+    try {
+        map.setPaintProperty('location-polygons', 'fill-opacity', [
+            'case',
+            ['==', ['get', 'id'], index],
+            0.9, // highlighted opacity
+            [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                5, 0.01,   // At zoom level 5 and below, opacity is 1% (almost invisible)
+                8, 0.3,    // At zoom level 8, opacity is 30%
+                11, 0.8,   // At zoom level 11, opacity peaks at 80%
+                13, 0.3,   // At zoom level 13, opacity decreases to 30%
+                15, 0.08   // At zoom level 15 and above, opacity is 8% (almost invisible again)
+            ]
+        ]);
 
-    // Update stroke color and width for highlighted polygon
-    map.setPaintProperty('location-polygons-outline', 'line-color', [
-        'case',
-        ['==', ['get', 'id'], index],
-        '#000000', // black stroke for highlighted
-        ['get', 'strokeColor'] // default stroke color
-    ]);
+        // Update stroke color and width for highlighted polygon
+        map.setPaintProperty('location-polygons-outline', 'line-color', [
+            'case',
+            ['==', ['get', 'id'], index],
+            '#000000', // black stroke for highlighted
+            ['get', 'strokeColor'] // default stroke color
+        ]);
 
-    map.setPaintProperty('location-polygons-outline', 'line-width', [
-        'case',
-        ['==', ['get', 'id'], index],
-        5,    // highlighted width
-        2     // default width
-    ]);
+        map.setPaintProperty('location-polygons-outline', 'line-width', [
+            'case',
+            ['==', ['get', 'id'], index],
+            5,    // highlighted width
+            2     // default width
+        ]);
+    } catch (error) {
+        console.error('Error setting map paint properties:', error);
+    }
 
     // Remove highlight from all pins
     document.querySelectorAll('.map-pin').forEach(pin => {
@@ -575,7 +833,15 @@ function highlightPolygon(map, index) {
     document.querySelectorAll('.card').forEach(c => c.classList.remove('highlighted-card'));
 
     // Add highlight to selected card
-    document.querySelector(`.card[data-index="${index}"]`)?.classList.add('highlighted-card');
+    const selectedCard = document.querySelector(`.card[data-index="${index}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('highlighted-card');
+        
+        // Scroll the card into view if it's visible
+        if (selectedCard.style.display !== 'none') {
+            selectedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
 }
 
 // Add this function before createPolygonCoordinates
@@ -744,13 +1010,60 @@ function initializeFilters(data) {
 function applyFilters() {
     if (!sampleData.length || !map) return;
 
-    const selectedDistrict = document.getElementById('districtFilter').value;
-    const selectedVillage = document.getElementById('villageFilter').value;
-    const selectedPriority = document.getElementById('priorityFilter').value;
-    const selectedStatus = document.getElementById('statusFilter').value;
+    // Get values from the original select elements or their data attributes
+    const districtElement = document.getElementById('districtFilter');
+    const villageElement = document.getElementById('villageFilter');
+    const priorityElement = document.getElementById('priorityFilter');
+    const statusElement = document.getElementById('statusFilter');
+    
+    // Get values from data attributes if available, otherwise use the value property
+    const selectedDistrict = districtElement.getAttribute('data-selected-values') || districtElement.value;
+    const selectedVillage = villageElement.getAttribute('data-selected-values') || villageElement.value;
+    const selectedPriority = priorityElement.getAttribute('data-selected-values') || priorityElement.value;
+    const selectedStatus = statusElement.getAttribute('data-selected-values') || statusElement.value;
+    
+    // Debug raw values from select elements
+    console.log('Raw filter values:', {
+        district: selectedDistrict,
+        village: selectedVillage,
+        priority: selectedPriority,
+        status: selectedStatus
+    });
+    
     const searchText = currentSearchText.toLowerCase().trim();
 
+    // Parse comma-separated values for multi-select
+    const selectedDistricts = selectedDistrict ? selectedDistrict.split(',') : [];
+    const selectedVillages = selectedVillage ? selectedVillage.split(',') : [];
+    const selectedPriorities = selectedPriority ? selectedPriority.split(',') : [];
+    const selectedStatuses = selectedStatus ? selectedStatus.split(',') : [];
+
+    console.log('Selected Districts:', selectedDistricts);
+    console.log('Selected Villages:', selectedVillages);
+    console.log('Selected Priorities:', selectedPriorities);
+    console.log('Selected Statuses:', selectedStatuses);
+
+    // Debug: Count total items that should match each priority
+    if (selectedPriorities.length > 0) {
+        const priorityMatchCounts = {};
+        selectedPriorities.forEach(priority => {
+            priorityMatchCounts[priority] = 0;
+        });
+        
+        // Count items for each priority
+        sampleData.forEach(item => {
+            const itemPriority = item['პრიორიტეტი']?.trim() || '';
+            if (selectedPriorities.includes(itemPriority)) {
+                priorityMatchCounts[itemPriority] = (priorityMatchCounts[itemPriority] || 0) + 1;
+            }
+        });
+        
+        console.log('Priority match counts:', priorityMatchCounts);
+        console.log('Total items matching any priority:', Object.values(priorityMatchCounts).reduce((a, b) => a + b, 0));
+    }
+
     // Filter cards
+    let visibleCardCount = 0;
     document.querySelectorAll('.card').forEach(card => {
         const index = card.getAttribute('data-index');
         const item = sampleData[index];
@@ -761,14 +1074,15 @@ function applyFilters() {
         const itemPriority = item['პრიორიტეტი']?.trim() || '';
         const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
 
+        // Check if matches any of the selected values or if no values are selected
+        const matchesDistrict = selectedDistricts.length === 0 || selectedDistricts.includes(itemDistrict);
+        const matchesVillage = selectedVillages.length === 0 || selectedVillages.includes(itemVillage);
+        const matchesPriority = selectedPriorities.length === 0 || selectedPriorities.includes(itemPriority);
+        
         // Special handling for empty status
-        const matchesStatus = !selectedStatus ||
-            (selectedStatus === "EMPTY_STATUS" && itemStatus === '') ||
-            itemStatus === selectedStatus;
-
-        const matchesDistrict = !selectedDistrict || itemDistrict === selectedDistrict;
-        const matchesVillage = !selectedVillage || itemVillage === selectedVillage;
-        const matchesPriority = !selectedPriority || itemPriority === selectedPriority;
+        const matchesStatus = selectedStatuses.length === 0 || 
+            (selectedStatuses.includes("EMPTY_STATUS") && itemStatus === '') || 
+            selectedStatuses.includes(itemStatus);
 
         // Check if the item matches the search text
         const matchesSearch = !searchText || Object.values(item).some(value => {
@@ -776,10 +1090,18 @@ function applyFilters() {
             return String(value).toLowerCase().includes(searchText);
         });
 
-        card.style.display = (matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch) ? 'block' : 'none';
+        const isVisible = matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch;
+        card.style.display = isVisible ? 'block' : 'none';
+        
+        if (isVisible) {
+            visibleCardCount++;
+        }
     });
+    
+    console.log('Visible card count:', visibleCardCount);
 
     // Update markers visibility
+    let visibleMarkerCount = 0;
     locationMarkers.forEach(({ marker, properties }) => {
         // Trim values before comparison
         const propertyDistrict = properties['რაიონი']?.trim() || '';
@@ -787,14 +1109,15 @@ function applyFilters() {
         const propertyPriority = properties['პრიორიტეტი']?.trim() || '';
         const propertyStatus = properties["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
 
+        // Check if matches any of the selected values or if no values are selected
+        const matchesDistrict = selectedDistricts.length === 0 || selectedDistricts.includes(propertyDistrict);
+        const matchesVillage = selectedVillages.length === 0 || selectedVillages.includes(propertyVillage);
+        const matchesPriority = selectedPriorities.length === 0 || selectedPriorities.includes(propertyPriority);
+        
         // Special handling for empty status
-        const matchesStatus = !selectedStatus ||
-            (selectedStatus === "EMPTY_STATUS" && propertyStatus === '') ||
-            propertyStatus === selectedStatus;
-
-        const matchesDistrict = !selectedDistrict || propertyDistrict === selectedDistrict;
-        const matchesVillage = !selectedVillage || propertyVillage === selectedVillage;
-        const matchesPriority = !selectedPriority || propertyPriority === selectedPriority;
+        const matchesStatus = selectedStatuses.length === 0 || 
+            (selectedStatuses.includes("EMPTY_STATUS") && propertyStatus === '') || 
+            selectedStatuses.includes(propertyStatus);
 
         // Check if the properties match the search text
         const matchesSearch = !searchText || Object.values(properties).some(value => {
@@ -802,17 +1125,140 @@ function applyFilters() {
             return String(value).toLowerCase().includes(searchText);
         });
 
-        marker.getElement().style.display = (matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch) ? 'block' : 'none';
+        const isVisible = matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch;
+        marker.getElement().style.display = isVisible ? 'block' : 'none';
+        
+        if (isVisible) {
+            visibleMarkerCount++;
+        }
+    });
+    
+    console.log('Visible marker count:', visibleMarkerCount);
+
+    // Create a filtered dataset for the map
+    const filteredData = sampleData.filter(item => {
+        // Skip items without coordinates or with exact location
+        if (!item.lat || !item.lon || item["ზუსტი ადგილმდებარეობა"]?.trim()) {
+            return false;
+        }
+        
+        const itemDistrict = item['რაიონი']?.trim() || '';
+        const itemVillage = item['სოფელი']?.trim() || '';
+        const itemPriority = item['პრიორიტეტი']?.trim() || '';
+        const itemStatus = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"]?.trim() || '';
+
+        // Check if matches any of the selected values or if no values are selected
+        const matchesDistrict = selectedDistricts.length === 0 || selectedDistricts.includes(itemDistrict);
+        const matchesVillage = selectedVillages.length === 0 || selectedVillages.includes(itemVillage);
+        const matchesPriority = selectedPriorities.length === 0 || selectedPriorities.includes(itemPriority);
+        
+        // Special handling for empty status
+        const matchesStatus = selectedStatuses.length === 0 || 
+            (selectedStatuses.includes("EMPTY_STATUS") && itemStatus === '') || 
+            selectedStatuses.includes(itemStatus);
+
+        // Check if the item matches the search text
+        const matchesSearch = !searchText || Object.values(item).some(value => {
+            if (value === null || value === undefined) return false;
+            return String(value).toLowerCase().includes(searchText);
+        });
+
+        return matchesDistrict && matchesVillage && matchesPriority && matchesStatus && matchesSearch;
+    });
+    
+    console.log(`Filtered data for map: ${filteredData.length} items`);
+
+    // Group points by location
+    const locationGroups = {};
+    
+    filteredData.forEach((item, i) => {
+        // Find the original index in sampleData
+        const index = sampleData.findIndex(d => d === item);
+        
+        let color;
+        const status = item["სტატუსი\n(მომლოდინე/ დასრულებულია)"];
+        const priority = item["პრიორიტეტი"]?.trim();
+
+        // Check if priority is filled and status is not "აღმოუჩინეს დახმარება"
+        if (priority && status !== "აღმოუჩინეს დახმარება") {
+            color = '#000000'; // Black for priority items not completed
+        } else if (status === "მომლოდინე") {
+            color = '#e74c3c'; // Red
+        } else if (status === "აღმოუჩინეს დახმარება" || status === "აღმოუჩინეს დახმარება") {
+            color = '#2ecc71'; // Green
+        } else if (status === "მიდის მოხალისე") {
+            color = '#3498db'; // Blue
+        } else if (status === "მოინახულა მოხალისემ") {
+            color = '#9b59b6'; // Purple
+        } else {
+            color = '#95a5a6'; // Gray for unknown/empty status
+        }
+
+        const key = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
+        if (!locationGroups[key]) {
+            locationGroups[key] = [];
+        }
+        
+        locationGroups[key].push({
+            item,
+            index,
+            fillColor: color,
+            strokeColor: color
+        });
     });
 
-    // Update polygon features using the updateFeatures function with filtering enabled
-    const features = updateFeatures(true);
+    // Create polygon features
+    const features = Object.values(locationGroups).flatMap(group => {
+        // For single items, use normal size; for groups make them smaller
+        const isGroup = group.length > 1;
+        const sizeMultiplier = isGroup ? 0.7 : 1.0; // 30% smaller when in a group
 
-    // Update the source data
-    map.getSource('locations').setData({
-        type: 'FeatureCollection',
-        features: features
+        return group.map((entry, groupIndex) => {
+            const { item, index, fillColor, strokeColor } = entry;
+            const baseRadius = calculatePolygonSize(map);
+
+            // Only apply offset if we have more than one item at this location
+            let offsetLon = item.lon;
+            let offsetLat = item.lat;
+
+            if (isGroup) {
+                const offset = calculatePointOffset(groupIndex, baseRadius);
+                offsetLon = item.lon + offset.x;
+                offsetLat = item.lat + offset.y;
+            }
+
+            return {
+                type: 'Feature',
+                properties: {
+                    id: index,
+                    ...item,
+                    fillColor,
+                    strokeColor,
+                    inGroup: isGroup
+                },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [createPolygonCoordinates(map, offsetLon, offsetLat, 6, sizeMultiplier)]
+                }
+            };
+        });
     });
+
+    console.log(`Generated ${features.length} polygon features`);
+
+    // Update the source data if it exists
+    if (map.getSource('locations')) {
+        try {
+            map.getSource('locations').setData({
+                type: 'FeatureCollection',
+                features: features
+            });
+        } catch (error) {
+            console.error('Error updating map source:', error);
+        }
+    } else {
+        console.warn('Map source "locations" not found');
+    }
 }
 
 // Initialize map after data is loaded
