@@ -53,11 +53,57 @@ function closeHelpModal() {
     document.body.style.overflow = '';
 }
 
+// Functions for modal help offer
+function openHelpOfferModal() {
+    const modal = document.getElementById('help-offer-modal');
+    const mobileSidebarButton = document.querySelector('.mobile-sidebar-button');
+
+    // Hide the mobile sidebar button
+    if (mobileSidebarButton) {
+        mobileSidebarButton.style.display = 'none';
+    }
+
+    modal.style.display = 'block';
+
+    // Add a small delay before adding the active class for animation
+    setTimeout(() => {
+        modal.classList.add('active');
+    }, 10);
+
+    // Prevent scrolling of the background content
+    document.body.style.overflow = 'hidden';
+}
+
+function closeHelpOfferModal() {
+    const modal = document.getElementById('help-offer-modal');
+    const mobileSidebarButton = document.querySelector('.mobile-sidebar-button');
+
+    modal.classList.remove('active');
+
+    // Add a small delay before hiding the modal to allow for animation
+    setTimeout(() => {
+        modal.style.display = 'none';
+
+        // Show the mobile sidebar button again if it exists
+        if (mobileSidebarButton && window.innerWidth <= 768) {
+            mobileSidebarButton.style.display = 'block';
+        }
+    }, 300);
+
+    // Re-enable scrolling of the background content
+    document.body.style.overflow = '';
+}
+
 // Close modal if user clicks outside the modal content
 window.addEventListener('click', function (event) {
     const helpModal = document.getElementById('help-modal');
     if (event.target === helpModal) {
         closeHelpModal();
+    }
+
+    const helpOfferModal = document.getElementById('help-offer-modal');
+    if (event.target === helpOfferModal) {
+        closeHelpOfferModal();
     }
 
     const notificationModal = document.getElementById('notification-modal');

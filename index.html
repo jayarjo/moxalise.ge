@@ -43,7 +43,7 @@
     <script src="https://unpkg.com/tippy.js@6.3.7/dist/tippy-bundle.umd.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/tippy.js@6.3.7/dist/tippy.css" />
     <link rel="stylesheet" href="https://unpkg.com/tippy.js@6.3.7/themes/light.css" />
-    <link rel="stylesheet" href="style.css?v=2035" />
+    <link rel="stylesheet" href="style.css?v=2036" />
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-RGB500YVSX"></script>
@@ -64,6 +64,9 @@
 
     <!-- Help Request Button -->
     <button class="help-request-button" onclick="openHelpModal()">დახმარების მოთხოვნა</button>
+
+    <!-- Help Offer Button -->
+    <button class="help-offer-button" onclick="openHelpOfferModal()">დახმარების შეთავაზება</button>
 
     <!-- Instructions Button -->
     <button class="instructions-button" onclick="openInstructionsModal()">ინსტრუქცია</button>
@@ -175,6 +178,38 @@
                     loading="lazy"
                     style="width:100%; height:100%; border:none;">
                 </iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Offer Modal -->
+    <div id="help-offer-modal" class="modal">
+        <div class="modal-content help-offer-modal-content">
+            <div class="modal-header">
+                <h2>დახმარების შეთავაზება</h2>
+                <span class="modal-close" onclick="closeHelpOfferModal()">&times;</span>
+            </div>
+            <div class="modal-body help-offer-modal-body">
+                <div class="help-offer-links">
+                    <a href="https://docs.google.com/forms/d/1H1-0ukVMQUV25HvFWd2akcG0_dYrXpWfQN_MIlHOEF4/viewform?pli=1&chromeless=1&edit_requested=true&fbclid=IwY2xjawItP0dleHRuA2FlbQIxMAABHfog87xENWuyfNASm6pLiQPgJCyUagOtGgWne4wdqtLHH8vdNiFMwXI9VQ_aem_WHbZQqtrbh1t3OkBLaPqcw" target="_blank" class="help-offer-link">
+                        <div class="help-offer-block">
+                            <h3>მივდივარ გურიაში</h3>
+                            <p>გსურთ გურიაში გამგზავრება დაზარალებულების დასახმარებლად</p>
+                        </div>
+                    </a>
+                    <a href="https://forms.gle/NWDWEiYwqoCtT7pr5?fbclid=IwY2xjawItP1tleHRuA2FlbQIxMAABHa-1rVR5lAEnTk2kvZKEM81BSLvDpCMsqER94Uwl19COm8vNHIgZoJ92pg_aem_4Gnl6v9xGow0vJUV0rmfFw" target="_blank" class="help-offer-link">
+                        <div class="help-offer-block">
+                            <h3>ჰუმანიტარული დახმარება</h3>
+                            <p>გსურთ ჰუმანიტარული დახმარების გაგზავნა დაზარალებულებისთვის</p>
+                        </div>
+                    </a>
+                    <a href="https://forms.gle/t85QYEq7ASqpPkya7?fbclid=IwY2xjawItP2JleHRuA2FlbQIxMAABHfGd9C4g1-VtD5o8I7wK_joE_z2rlyTP0Qq3J6HXRWkWZxkPcEAHwTh9fw_aem_nanzmOrVmF7HxcM-LJDzCQ" target="_blank" class="help-offer-link">
+                        <div class="help-offer-block">
+                            <h3>წამიყოლე გურიაში</h3>
+                            <p>გსურთ გურიაში გამგზავრება, მაგრამ გჭირდებათ ტრანსპორტირება</p>
+                        </div>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -311,7 +346,7 @@
         </div>
     </div>
 
-    <script src="main.js?version=2035"></script>
+    <script src="main.js?version=2036"></script>
 </body>
 
 </html>
