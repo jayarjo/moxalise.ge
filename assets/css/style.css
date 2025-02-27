@@ -736,13 +736,13 @@ a:hover {
     border: 3px solid black;
     z-index: 20;
     /* Ensure highlighted pin is above all others, even hovered ones */
-    transform: rotate(45deg) scale(3); /* Make highlighted pins 3x bigger */
+    transform: rotate(45deg) scale(1.5); /* Slightly reduce the scale for better visibility */
     transform-origin: center bottom;
     box-shadow: 0 0 15px 5px rgba(255, 255, 0, 0.7); /* Add yellow glow effect */
 }
 
 .map-pin.highlighted:hover {
-    transform: rotate(45deg) scale(3.1); /* Slightly larger on hover */
+    transform: rotate(45deg) scale(1.6); /* Slightly larger on hover */
     box-shadow: 0 0 20px 8px rgba(255, 255, 0, 0.8); /* Stronger glow on hover */
 }
 
@@ -784,18 +784,27 @@ a:hover {
 
 .filters {
     margin: 10px 0;
-    padding: 10px;
+    padding: 15px;
     background: #f8f9fa;
     border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .filter-select {
     width: 100%;
-    padding: 8px;
+    padding: 8px 12px;
     margin: 5px 0;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
+    display: block; /* Ensure selects are visible */
+    background-color: white;
+}
+
+/* Ensure the select dropdowns show properly */
+.filter-select option {
+    padding: 8px;
+    background-color: white;
 }
 
 /* Map legend styles */
@@ -1046,12 +1055,7 @@ a:hover {
     border: 1px solid #ced4da;
     border-radius: 0 0 4px 4px;
     z-index: 1000;
-    display: none;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.custom-dropdown.open .custom-dropdown-menu {
-    display: block;
 }
 
 /* Search input styles */
@@ -1086,6 +1090,7 @@ a:hover {
     align-items: center;
     border-bottom: 1px solid #f0f0f0;
     flex-wrap: wrap;
+    position: relative;
 }
 
 .custom-dropdown-item:last-child {
@@ -1104,11 +1109,23 @@ a:hover {
 .custom-dropdown-checkbox {
     margin-right: 8px;
     cursor: pointer;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    accent-color: #3498db;
+    position: relative;
+    top: 1px;
 }
 
 .custom-dropdown-item-label {
     flex: 1;
     margin-right: 5px;
+    padding-left: 5px;
+}
+
+/* Remove the before pseudo-element since we're using real checkboxes now */
+.custom-dropdown-item.selected::before {
+    content: none;
 }
 
 .custom-dropdown-item-count {
@@ -1157,7 +1174,18 @@ a:hover {
     }
     
     .custom-dropdown-item {
-        padding: 10px;
+        padding: 12px 10px;
+    }
+    
+    /* Make checkboxes larger on mobile for better touch targets */
+    .custom-dropdown-checkbox {
+        width: 18px;
+        height: 18px;
+        margin-right: 10px;
+    }
+    
+    .custom-dropdown-item-label {
+        font-size: 15px;
     }
 }
 
@@ -1243,6 +1271,7 @@ a:hover {
     z-index: 2500;
     opacity: 0;
     transition: opacity 0.3s ease;
+    overflow: hidden; /* Prevent body scrolling when modal is open */
 }
 
 .modal.active {
@@ -1583,9 +1612,9 @@ a:hover {
 /* Instructions Button Styles */
 .instructions-button {
     position: fixed;
-    right: 350px;
+    right: 510px;
     top: 10px;
-    z-index: 1000;
+    z-index: 2000;
     background-color: #3498db;
     color: white;
     font-weight: bold;
@@ -1596,6 +1625,7 @@ a:hover {
     cursor: pointer;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
+    display: block;
 }
 
 .instructions-button:hover {
@@ -1610,11 +1640,15 @@ a:hover {
     width: 90%;
     height: auto;
     max-height: 90vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .instructions-modal-body {
     padding: 0;
     overflow-y: auto;
+    max-height: calc(90vh - 60px); /* Subtract header height to ensure content fits */
+    flex: 1;
 }
 
 /* Instructions Tabs */
@@ -1622,6 +1656,9 @@ a:hover {
     display: flex;
     background-color: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 .instructions-tab {
@@ -1651,6 +1688,8 @@ a:hover {
 .instructions-content {
     display: none;
     padding: 25px;
+    overflow-y: auto;
+    max-height: calc(90vh - 110px); /* Subtract header and tabs height */
 }
 
 .instructions-content.active {
@@ -1700,26 +1739,33 @@ a:hover {
 @media (max-width: 768px) {
     .instructions-button {
         right: 10px;
-        top: 60px;
-        padding: 10px 15px;
-        font-size: 14px;
+        top: 55px;
+        padding: 8px 12px;
+        font-size: 12px;
+        z-index: 2001;
     }
     
     .instructions-modal-content {
         width: 100%;
         margin: 0;
         height: 100vh;
+        max-height: 100vh;
         border-radius: 0;
         max-width: none;
+    }
+    
+    .instructions-modal-body {
+        max-height: calc(100vh - 50px); /* Adjust for smaller header on mobile */
+    }
+    
+    .instructions-content {
+        max-height: calc(100vh - 100px); /* Adjust for smaller header and tabs on mobile */
+        padding: 15px;
     }
     
     .instructions-tab {
         padding: 12px 10px;
         font-size: 14px;
-    }
-    
-    .instructions-content {
-        padding: 15px;
     }
     
     .instructions-content h3 {
@@ -1812,4 +1858,27 @@ a:hover {
     margin-top: 0;
     padding-bottom: 8px;
     margin-bottom: 8px;
+}
+
+/* Custom scrollbar for better user experience */
+.instructions-modal-body::-webkit-scrollbar,
+.instructions-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.instructions-modal-body::-webkit-scrollbar-track,
+.instructions-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.instructions-modal-body::-webkit-scrollbar-thumb,
+.instructions-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.instructions-modal-body::-webkit-scrollbar-thumb:hover,
+.instructions-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
