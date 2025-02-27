@@ -462,7 +462,7 @@ function updateFeatures(filtered = false) {
 
     // Count all items with coordinates for debugging
     const itemsWithCoordinates = sampleData.filter(item => 
-        item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()
+        item.lat && item.lon && (!item["ზუსტი ადგილმდებარეობა"]?.trim() || !isURL(item["ზუსტი ადგილმდებარეობა"]))
     ).length;
     console.log(`Total items with coordinates: ${itemsWithCoordinates}`);
 
@@ -478,7 +478,7 @@ function updateFeatures(filtered = false) {
         
         // Count items for each selected priority
         sampleData.forEach(item => {
-            if (item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()) {
+            if (item.lat && item.lon && (!item["ზუსტი ადგილმდებარეობა"]?.trim() || !isURL(item["ზუსტი ადგილმდებარეობა"]))) {
                 const itemPriority = item['პრიორიტეტი']?.trim() || '';
                 if (selectedPriorities.includes(itemPriority)) {
                     priorityCounts[itemPriority] = (priorityCounts[itemPriority] || 0) + 1;
@@ -496,8 +496,8 @@ function updateFeatures(filtered = false) {
     if (filtered) {
         // Create a detailed filter function that logs each step
         filteredItems = sampleData.filter(item => {
-            // Skip items without coordinates or with exact location
-            if (!item.lat || !item.lon || item["ზუსტი ადგილმდებარეობა"]?.trim()) {
+            // Skip items without coordinates or with exact location that is a URL
+            if (!item.lat || !item.lon || (item["ზუსტი ადგილმდებარეობა"]?.trim() && isURL(item["ზუსტი ადგილმდებარეობა"]))) {
                 return false;
             }
             
@@ -527,7 +527,7 @@ function updateFeatures(filtered = false) {
     } else {
         // If not filtering, include all items with coordinates
         filteredItems = sampleData.filter(item => 
-            item.lat && item.lon && !item["ზუსტი ადგილმდებარეობა"]?.trim()
+            item.lat && item.lon && (!item["ზუსტი ადგილმდებარეობა"]?.trim() || !isURL(item["ზუსტი ადგილმდებარეობა"]))
         );
     }
 
@@ -1137,8 +1137,8 @@ function applyFilters() {
 
     // Create a filtered dataset for the map
     const filteredData = sampleData.filter(item => {
-        // Skip items without coordinates or with exact location
-        if (!item.lat || !item.lon || item["ზუსტი ადგილმდებარეობა"]?.trim()) {
+        // Skip items without coordinates or with exact location that is a URL
+        if (!item.lat || !item.lon || (item["ზუსტი ადგილმდებარეობა"]?.trim() && isURL(item["ზუსტი ადგილმდებარეობა"]))) {
             return false;
         }
         
@@ -1471,7 +1471,7 @@ Promise.all([
 
             // First group pins by location
             sampleData.forEach((item, index) => {
-                if (item.lat && item.lon && item["ზუსტი ადგილმდებარეობა"]?.trim()) {
+                if (item.lat && item.lon && item["ზუსტი ადგილმდებარეობა"]?.trim() && isURL(item["ზუსტი ადგილმდებარეობა"])) {
                     const key = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
                     if (!locationGroups[key]) {
                         locationGroups[key] = [];
