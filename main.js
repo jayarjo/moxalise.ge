@@ -529,7 +529,16 @@ function highlightPolygon(map, index) {
         'case',
         ['==', ['get', 'id'], index],
         0.9, // highlighted opacity
-        0.6  // default opacity
+        [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            5, 0.01,   // At zoom level 5 and below, opacity is 1% (almost invisible)
+            8, 0.3,    // At zoom level 8, opacity is 30%
+            11, 0.8,   // At zoom level 11, opacity peaks at 80%
+            13, 0.3,   // At zoom level 13, opacity decreases to 30%
+            15, 0.08   // At zoom level 15 and above, opacity is 8% (almost invisible again)
+        ]
     ]);
 
     // Update stroke color and width for highlighted polygon
@@ -1228,7 +1237,16 @@ Promise.all([
                 source: 'locations',
                 paint: {
                     'fill-color': ['get', 'fillColor'],
-                    'fill-opacity': 0.6
+                    'fill-opacity': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        5, 0.01,   // At zoom level 5 and below, opacity is 1% (almost invisible)
+                        8, 0.3,    // At zoom level 8, opacity is 30%
+                        11, 0.8,   // At zoom level 11, opacity peaks at 80%
+                        13, 0.3,   // At zoom level 13, opacity decreases to 30%
+                        15, 0.08   // At zoom level 15 and above, opacity is 8% (almost invisible again)
+                    ]
                 }
             });
 
@@ -1506,7 +1524,16 @@ function toggleSatellite() {
                     source: 'locations',
                     paint: {
                         'fill-color': ['get', 'fillColor'],
-                        'fill-opacity': 0.6
+                        'fill-opacity': [
+                            'interpolate',
+                            ['linear'],
+                            ['zoom'],
+                            5, 0.01,   // At zoom level 5 and below, opacity is 1% (almost invisible)
+                            8, 0.3,    // At zoom level 8, opacity is 30%
+                            11, 0.8,   // At zoom level 11, opacity peaks at 80%
+                            13, 0.3,   // At zoom level 13, opacity decreases to 30%
+                            15, 0.08   // At zoom level 15 and above, opacity is 8% (almost invisible again)
+                        ]
                     }
                 });
             }
@@ -1656,6 +1683,9 @@ function addMapEventHandlers() {
 
     // Update polygon sizes when zoom changes
     map.on('zoom', function () {
+        // Log current zoom level for debugging
+        console.log('Current zoom level:', map.getZoom());
+        
         // Update features with new polygon sizes, passing current filter state
         const updatedFeatures = updateFeatures(true);
 
