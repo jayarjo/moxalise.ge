@@ -802,10 +802,7 @@ function createTooltipHTML(feature, instanceId) {
                 <div class="info-card-scrollable">`;
 
     // Add ID at the top of the tooltip using the CSS classes
-    html += `<p class="id-field">
-                <span class="id-label">ID:</span> 
-                <span class="id-value">${data.id || ''}</span>
-            </p>`;
+    html += `<p class="id-field"><span class="id-label">ID:</span> <span class="id-value">${data.id || ''}</span></p>`;
 
     // Get all keys except internal ones and those containing 'დისკუსია'
     const keys = Object.keys(data).filter(key =>
@@ -854,8 +851,8 @@ function createTooltipHTML(feature, instanceId) {
     if (data.lat && data.lon) {
         const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${data.lat},${data.lon}`;
         html += `<div class="directions-container">
-            <a href="${directionsUrl}" target="_blank">ნავიგაცია</a>
-            ${data.id ? `<button id="notification-btn-${instanceId}" onclick="sendNotification('notification-btn-${instanceId}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>განაახლე ინფორმაცია!</button>` : ''}
+            <a href="${directionsUrl}" target="_blank" style="position: relative; z-index: 3500;">ნავიგაცია</a>
+            ${data.id ? `<button id="notification-btn-${instanceId}" onclick="sendNotification('notification-btn-${instanceId}')" style="position: relative; z-index: 3500;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>განაახლე ინფორმაცია!</button>` : ''}
         </div>`;
     }
 
@@ -1643,7 +1640,7 @@ Promise.all([
                             `).join('')}
                             ${item.lat && item.lon ? `
                             <div class="card-actions">
-                                ${item.id ? `<button id="card-notification-btn-${index}" onclick="event.stopPropagation(); sendNotification('card-notification-btn-${index}')" class="card-notification-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>განაახლე ინფორმაცია!</button>` : ''}
+                                ${item.id ? `<button id="card-notification-btn-${index}" onclick="event.stopPropagation(); sendNotification('card-notification-btn-${index}')" class="card-notification-btn" style="position: relative; z-index: 3500;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>განაახლე ინფორმაცია!</button>` : ''}
                             </div>
                             ` : ''}
                         </div>`;
@@ -1857,7 +1854,7 @@ Promise.all([
                                 ]
                             },
                             interactiveBorder: 30,
-                            zIndex: 9999,
+                            zIndex: 3000,
                             maxWidth: 350,
                             // Add these properties for scrollable tooltips
                             animation: 'shift-away',
@@ -2308,7 +2305,7 @@ function addMapEventHandlers() {
                         ]
                     },
                     interactiveBorder: 30,
-                    zIndex: 9999,
+                    zIndex: 3000,
                     maxWidth: 350,
                     // Add these properties for scrollable tooltips
                     animation: 'shift-away',
@@ -2397,6 +2394,9 @@ function openNotificationModal(btnId) {
         return;
     }
 
+    // Ensure the modal has the highest z-index
+    modal.style.zIndex = "4000";
+    
     const mobileSidebarButton = document.querySelector('.mobile-sidebar-button');
 
     // Store the button ID in a data attribute for later use
@@ -2411,17 +2411,20 @@ function openNotificationModal(btnId) {
             <form id="notification-form">
                 <div class="form-group">
                     <label for="volunteer-name">მოხალისის სახელი</label>
-                    <input type="text" id="volunteer-name" name="volunteer-name" required>
+                    <input placeholder="თქვენი სახელი" type="text" id="volunteer-name" name="volunteer-name" required>
                 </div>
                 <div class="form-group">
                     <label for="phone-number">ტელეფონის ნომერი</label>
-                    <input type="tel" id="phone-number" name="phone-number" required>
+                    <input placeholder="თქვენი ტელეფონის ნომერი" type="tel" id="phone-number" name="phone-number" required>
                 </div>
                 <div class="form-group">
                     <label for="notification-message">შეტყობინება</label>
-                    <textarea id="notification-message" name="notification-message" rows="4" required></textarea>
+                    <textarea placeholder="რა სახის დახმარება იგეგმება ან გაეწია დაზარალებულს" id="notification-message" name="notification-message" rows="4" required></textarea>
                 </div>
-                <button type="submit" class="submit-btn">გაგზავნა</button>
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn" onclick="closeNotificationModal()">გაუქმება</button>
+                    <button type="submit" class="submit-btn">გაგზავნა</button>
+                </div>
             </form>
         `;
 
@@ -2491,6 +2494,12 @@ function sendNotification(btnId) {
         alert('შეტყობინების გაგზავნა ვერ მოხერხდა. გთხოვთ სცადოთ თავიდან.');
         return;
     }
+
+    // Ensure the modal has the highest z-index
+    modal.style.zIndex = "4000";
+    
+    // Don't close tooltips - we want them to remain visible
+    // The notification modal will appear on top due to higher z-index
 
     // Open the notification modal instead of directly sending the notification
     openNotificationModal(btnId);

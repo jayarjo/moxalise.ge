@@ -78,7 +78,7 @@ body {
     color: #333;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 9999 !important;
+    z-index: 3000 !important;
 }
 
 @media (min-width: 768px) {
@@ -96,7 +96,7 @@ body {
     padding: 5px;
     font-size: 14px;
     position: relative;
-    z-index: 9999;
+    z-index: 3000;
     display: flex;
     flex-direction: column;
     max-height: 80vh; /* Limit to 80% of viewport height */
@@ -466,6 +466,8 @@ a:hover {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    z-index: 3500;
 }
 
 .card-notification-btn:hover {
@@ -1388,6 +1390,7 @@ a:hover {
     width: 90%;
     height: auto;
     min-height: 400px;
+    z-index: 4000;
 }
 
 .notification-modal-body {
@@ -1688,4 +1691,87 @@ a:hover {
     .important-note h4 {
         font-size: 16px;
     }
+}
+
+/* Updated styling for all notification buttons */
+[id^="notification-btn-"] {
+    padding: 8px 14px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    z-index: 3500;
+}
+
+.directions-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    gap: 10px;
+    position: relative;
+    z-index: 3500;
+    background: white;
+}
+
+.directions-container a {
+    font-weight: 600;
+    font-size: 14px;
+    color: #3498db;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    text-align: center;
+    flex: 1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 3500;
+}
+
+.directions-container a:hover {
+    background-color: #e9ecef;
+    color: #2980b9;
+    text-decoration: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+/* Styles for ID field display */
+.id-field {
+    margin-top: 5px;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #ddd;
+}
+
+.id-label {
+    font-weight: bold;
+    color: #e74c3c;
+    display: inline-block;
+    min-width: 40px;
+}
+
+.id-value {
+    font-weight: bold;
+    display: inline-block;
+}
+
+.card .id-field {
+    margin-top: 0;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
 }
