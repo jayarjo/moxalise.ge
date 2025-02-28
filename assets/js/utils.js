@@ -567,18 +567,62 @@ function ensureMapLayers(map) {
 
 /**
  * Calculate the number of days passed since a given date string
- * @param {string} dateString - The date string to calculate days from
+ * @param {string} dateString - The date string to calculate days from (e.g., "2/27/2025 15:22:00")
  * @return {number} - Number of days passed (0 if invalid date)
  */
 function calculateDaysPassed(dateString) {
-  if (!dateString) return 0;
+  if (!dateString) {
+    console.log('No date string provided');
+    return 0;
+  }
 
   try {
-    // Parse the date string
-    const date = new Date(dateString);
+    console.log(`Parsing date string: "${dateString}"`);
+
+    // Parse the date string - handle the specific format MM/DD/YYYY HH:MM:SS
+    let date;
+
+    // First try standard Date parsing
+    date = new Date(dateString);
+
+    // If that fails, try manual parsing for the format "M/D/YYYY HH:MM:SS"
+    if (isNaN(date.getTime())) {
+      console.log('Standard date parsing failed, trying manual parsing');
+
+      // Extract parts from the date string
+      const parts = dateString.split(' ');
+      if (parts.length >= 1) {
+        const dateParts = parts[0].split('/');
+        if (dateParts.length === 3) {
+          const month = parseInt(dateParts[0]) - 1; // Months are 0-indexed in JS
+          const day = parseInt(dateParts[1]);
+          const year = parseInt(dateParts[2]);
+
+          // Create date with just the date part
+          date = new Date(year, month, day);
+
+          // Add time if available
+          if (parts.length >= 2) {
+            const timeParts = parts[1].split(':');
+            if (timeParts.length >= 2) {
+              date.setHours(parseInt(timeParts[0]));
+              date.setMinutes(parseInt(timeParts[1]));
+              if (timeParts.length >= 3) {
+                date.setSeconds(parseInt(timeParts[2]));
+              }
+            }
+          }
+        }
+      }
+    }
 
     // Check if date is valid
-    if (isNaN(date.getTime())) return 0;
+    if (isNaN(date.getTime())) {
+      console.log(`Invalid date after all parsing attempts: "${dateString}"`);
+      return 0;
+    }
+
+    console.log(`Parsed date: ${date.toISOString()}`);
 
     // Get current date (without time)
     const today = new Date();
@@ -589,6 +633,8 @@ function calculateDaysPassed(dateString) {
 
     // Convert to days
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    console.log(`Days passed: ${diffDays}`);
 
     return diffDays;
   } catch (error) {

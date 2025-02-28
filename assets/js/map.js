@@ -313,11 +313,17 @@ function setupMarkers() {
 
       // Add age badge for pending requests
       if (status === 'მომლოდინე') {
-        // Get registration date from the item
-        const regDateStr = item['რეგისტრაციის თარიღი'];
+        // Get registration date from the item - only use დამატების თარიღი field
+        const regDateStr = item['დამატების თარიღი'];
+
+        // Debug registration date
+        console.log('Registration date for item', index, ':', regDateStr);
 
         // Calculate days passed
         const daysPassed = calculateDaysPassed(regDateStr);
+
+        // Debug days passed
+        console.log('Days passed for item', index, ':', daysPassed);
 
         // Store days passed for tooltip display
         item._daysPassed = daysPassed;
@@ -327,7 +333,9 @@ function setupMarkers() {
           // Create badge element
           const badge = document.createElement('div');
           badge.className = 'age-badge';
-          badge.textContent = daysPassed;
+
+          // Format the badge text: show actual number for 1-9, show "9+" for >9
+          badge.textContent = daysPassed > 9 ? '9+' : daysPassed;
 
           // Set badge color based on age
           if (daysPassed <= 3) {
@@ -337,11 +345,15 @@ function setupMarkers() {
             badge.style.backgroundColor = '#ff9800'; // Orange for 4-7 days
           } else {
             badge.style.backgroundColor = '#e74c3c'; // Red for >7 days
-            badge.classList.add('pulsing'); // Add pulsing animation
+            badge.classList.add('pulsing'); // Add pulsing class (though animation is now disabled)
           }
 
-          container.appendChild(badge);
+          // Append to pin element instead of container
+          el.appendChild(badge);
+          el.classList.add('has-badge'); // Add class to pin element
+          console.log('Added badge to pin for item', index);
         }
+        // No else clause - don't add a badge if no valid days
       }
 
       // Only apply offset if we have more than one item at this location

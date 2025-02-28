@@ -163,14 +163,16 @@ function createSidebarCards() {
 
     // Add age badge for pending requests
     if (status === 'მომლოდინე') {
-      // Get registration date from the item
-      const regDateStr = item['რეგისტრაციის თარიღი'];
+      // Get registration date from the item - only use დამატების თარიღი field
+      const regDateStr = item['დამატების თარიღი'];
 
       // Calculate days passed
       const daysPassed = calculateDaysPassed(regDateStr);
 
       // Store days passed for tooltip display
       item._daysPassed = daysPassed;
+
+      console.info(regDateStr, daysPassed);
 
       // Only add badge if we have valid days
       if (daysPassed > 0) {
@@ -181,14 +183,14 @@ function createSidebarCards() {
           badgeColor = '#ffeb3b'; // Yellow for 1-3 days
           textColor = '#333'; // Darker text for visibility
         } else if (daysPassed <= 7) {
-          badgeColor = '#ff9800'; // Orange for 4-7 days
+          badgeColor = '#8B0000'; // Dark burgundy red for >7
         } else {
           badgeColor = '#e74c3c'; // Red for >7 days
         }
 
         // Add badge to header
         cardHeader += `<div class="age-badge${daysPassed > 7 ? ' pulsing' : ''}"
-                            style="background-color: ${badgeColor}; color: ${textColor};">${daysPassed}</div>`;
+                            style="background-color: ${badgeColor}; color: ${textColor};">${daysPassed > 9 ? '9+' : daysPassed}</div>`;
       }
     }
 
