@@ -2,7 +2,7 @@
 let map;
 let sampleData = [];
 let locationMarkers = [];
-let userLocationMarker = null;
+// userLocationMarker is now declared in tracking.js
 let customDropdowns = {};
 let currentSearchText = '';
 let tippyInstances = {};
