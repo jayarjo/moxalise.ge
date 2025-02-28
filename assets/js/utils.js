@@ -568,12 +568,12 @@ function ensureMapLayers(map) {
 /**
  * Calculate days passed since a given date string.
  * Handles date strings in format like "2/27/2025 15:22:00" or other standard formats.
- * @param {string} dateString - The date string to calculate days from
+ * @param {string|Date} date - The date string to calculate days from
  * @returns {number} - Number of days passed (0 if invalid date)
  */
-function calculateDaysPassed(dateString) {
+function calculateDaysPassed(date) {
   // Check if dateString is valid
-  if (!dateString || typeof dateString !== 'string' || dateString.trim() === '') {
+  if (!date?.trim()) {
     // Keep error logging
     console.error('No date string provided');
     return 0;
@@ -582,17 +582,17 @@ function calculateDaysPassed(dateString) {
   try {
     // Remove debug logging
     // Try to parse the date
-    let date = new Date(dateString);
+    let date = new Date(date);
 
     // Check if date is valid
     if (isNaN(date.getTime())) {
-      console.error(`Invalid date: "${dateString}"`);
+      console.error(`Invalid date: "${date}"`);
 
       // Try manual parsing for format like "2/27/2025 15:22:00"
       console.error('Standard date parsing failed, trying manual parsing');
 
       // Extract components from the date string
-      const parts = dateString.split(' ');
+      const parts = date.split(' ');
       if (parts.length >= 1) {
         const datePart = parts[0];
         const dateComponents = datePart.split('/');
@@ -625,11 +625,11 @@ function calculateDaysPassed(dateString) {
 
           // Check if the manually parsed date is valid
           if (isNaN(date.getTime())) {
-            console.error(`Invalid date after all parsing attempts: "${dateString}"`);
+            console.error(`Invalid date after all parsing attempts: "${date}"`);
             return 0;
           }
         } else {
-          console.error(`Invalid date format: "${dateString}"`);
+          console.error(`Invalid date format: "${date}"`);
           return 0;
         }
       }

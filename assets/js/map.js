@@ -326,12 +326,7 @@ function setupMarkers() {
         // Calculate days since last interaction
         let daysSinceLastInteraction = null;
         if (lastUpdateDate) {
-          // Convert Date object to string for calculateDaysPassed
-          const lastUpdateDateStr =
-            lastUpdateDate.toLocaleDateString('en-US') +
-            ' ' +
-            lastUpdateDate.toLocaleTimeString('en-US');
-          daysSinceLastInteraction = calculateDaysPassed(lastUpdateDateStr);
+          daysSinceLastInteraction = calculateDaysPassed(lastUpdateDate);
         }
 
         // Use the most recent date for badge display
