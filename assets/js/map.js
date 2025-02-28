@@ -344,14 +344,12 @@ function setupMarkers() {
           } else if (daysPassed <= 7) {
             badge.style.backgroundColor = '#ff9800'; // Orange for 4-7 days
           } else {
-            badge.style.backgroundColor = '#e74c3c'; // Red for >7 days
-            badge.classList.add('pulsing'); // Add pulsing class (though animation is now disabled)
+            badge.style.backgroundColor = '#8B0000'; // Dark burgundy red for >7 days (was #e74c3c)
           }
 
           // Append to pin element instead of container
           el.appendChild(badge);
           el.classList.add('has-badge'); // Add class to pin element
-          console.log('Added badge to pin for item', index);
         }
         // No else clause - don't add a badge if no valid days
       }
@@ -961,7 +959,7 @@ function toggleSatellite() {
 // Check if the map is ready with all necessary layers and sources
 function isMapReady(map) {
   if (!map) {
-    console.log('Map is not defined');
+    console.error('Map is not defined');
     return false;
   }
 
@@ -977,14 +975,14 @@ function isMapReady(map) {
     const isReady = hasPolygonLayer && hasOutlineLayer && hasSource && hasData;
 
     if (!isReady) {
-      console.log(
+      console.error(
         `Map not ready: layers=${hasPolygonLayer && hasOutlineLayer}, source=${!!hasSource}, data=${!!hasData}`
       );
     }
 
     return isReady;
   } catch (error) {
-    console.log(`Error checking map readiness: ${error.message}`);
+    console.error(`Error checking map readiness: ${error.message}`);
     return false;
   }
 }
@@ -1000,13 +998,13 @@ function ensureMapLayers(map) {
 
     // If layers don't exist, try to add them
     if (!hasPolygonLayer || !hasOutlineLayer) {
-      console.log('Required layers not found, attempting to add them');
+      console.error('Required layers not found, attempting to add them');
 
       // Check if the source exists
       const hasSource = map.getSource('locations');
 
       if (!hasSource) {
-        console.log("Source 'locations' not found, attempting to add it");
+        console.error("Source 'locations' not found, attempting to add it");
 
         // Create features
         const features = updateFeatures(true);
@@ -1023,7 +1021,7 @@ function ensureMapLayers(map) {
 
       // Add polygon layer if it doesn't exist
       if (!hasPolygonLayer) {
-        console.log("Adding 'location-polygons' layer");
+        console.error("Adding 'location-polygons' layer");
         map.addLayer({
           id: 'location-polygons',
           type: 'fill',
@@ -1051,7 +1049,7 @@ function ensureMapLayers(map) {
 
       // Add outline layer if it doesn't exist
       if (!hasOutlineLayer) {
-        console.log("Adding 'location-polygons-outline' layer");
+        console.error("Adding 'location-polygons-outline' layer");
         map.addLayer({
           id: 'location-polygons-outline',
           type: 'line',

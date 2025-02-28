@@ -566,79 +566,85 @@ function ensureMapLayers(map) {
 }
 
 /**
- * Calculate the number of days passed since a given date string
- * @param {string} dateString - The date string to calculate days from (e.g., "2/27/2025 15:22:00")
- * @return {number} - Number of days passed (0 if invalid date)
+ * Calculate days passed since a given date string.
+ * Handles date strings in format like "2/27/2025 15:22:00" or other standard formats.
+ * @param {string} dateString - The date string to calculate days from
+ * @returns {number} - Number of days passed (0 if invalid date)
  */
 function calculateDaysPassed(dateString) {
-  if (!dateString) {
-    console.log('No date string provided');
+  // Check if dateString is valid
+  if (!dateString || typeof dateString !== 'string' || dateString.trim() === '') {
+    // Keep error logging
+    console.error('No date string provided');
     return 0;
   }
 
   try {
-    console.log(`Parsing date string: "${dateString}"`);
+    // Remove debug logging
+    // Try to parse the date
+    let date = new Date(dateString);
 
-    // Parse the date string - handle the specific format MM/DD/YYYY HH:MM:SS
-    let date;
-
-    // First try standard Date parsing
-    date = new Date(dateString);
-
-    // If that fails, try manual parsing for the format "M/D/YYYY HH:MM:SS"
+    // Check if date is valid
     if (isNaN(date.getTime())) {
-      console.log('Standard date parsing failed, trying manual parsing');
+      console.error(`Invalid date: "${dateString}"`);
 
-      // Extract parts from the date string
+      // Try manual parsing for format like "2/27/2025 15:22:00"
+      console.error('Standard date parsing failed, trying manual parsing');
+
+      // Extract components from the date string
       const parts = dateString.split(' ');
       if (parts.length >= 1) {
-        const dateParts = parts[0].split('/');
-        if (dateParts.length === 3) {
-          const month = parseInt(dateParts[0]) - 1; // Months are 0-indexed in JS
-          const day = parseInt(dateParts[1]);
-          const year = parseInt(dateParts[2]);
+        const datePart = parts[0];
+        const dateComponents = datePart.split('/');
 
-          // Create date with just the date part
-          date = new Date(year, month, day);
+        if (dateComponents.length === 3) {
+          const month = parseInt(dateComponents[0], 10) - 1; // Months are 0-indexed in JS
+          const day = parseInt(dateComponents[1], 10);
+          const year = parseInt(dateComponents[2], 10);
 
-          // Add time if available
-          if (parts.length >= 2) {
-            const timeParts = parts[1].split(':');
-            if (timeParts.length >= 2) {
-              date.setHours(parseInt(timeParts[0]));
-              date.setMinutes(parseInt(timeParts[1]));
-              if (timeParts.length >= 3) {
-                date.setSeconds(parseInt(timeParts[2]));
+          // Handle time part if available
+          let hours = 0,
+            minutes = 0,
+            seconds = 0;
+          if (parts.length > 1) {
+            const timePart = parts[1];
+            const timeComponents = timePart.split(':');
+
+            if (timeComponents.length >= 2) {
+              hours = parseInt(timeComponents[0], 10);
+              minutes = parseInt(timeComponents[1], 10);
+
+              if (timeComponents.length > 2) {
+                seconds = parseInt(timeComponents[2], 10);
               }
             }
           }
+
+          // Create date from components
+          date = new Date(year, month, day, hours, minutes, seconds);
+
+          // Check if the manually parsed date is valid
+          if (isNaN(date.getTime())) {
+            console.error(`Invalid date after all parsing attempts: "${dateString}"`);
+            return 0;
+          }
+        } else {
+          console.error(`Invalid date format: "${dateString}"`);
+          return 0;
         }
       }
     }
 
-    // Check if date is valid
-    if (isNaN(date.getTime())) {
-      console.log(`Invalid date after all parsing attempts: "${dateString}"`);
-      return 0;
-    }
+    // Remove debug logging
+    // Calculate days passed
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    console.log(`Parsed date: ${date.toISOString()}`);
-
-    // Get current date (without time)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Calculate difference in milliseconds
-    const diffMs = today.getTime() - date.getTime();
-
-    // Convert to days
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    console.log(`Days passed: ${diffDays}`);
-
+    // Remove debug logging
     return diffDays;
   } catch (error) {
-    console.error('Error calculating days passed:', error);
+    console.error(`Error calculating days passed: ${error.message}`);
     return 0;
   }
 }

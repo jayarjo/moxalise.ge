@@ -172,8 +172,6 @@ function createSidebarCards() {
       // Store days passed for tooltip display
       item._daysPassed = daysPassed;
 
-      console.info(regDateStr, daysPassed);
-
       // Only add badge if we have valid days
       if (daysPassed > 0) {
         // Determine badge color based on age
@@ -183,13 +181,13 @@ function createSidebarCards() {
           badgeColor = '#ffeb3b'; // Yellow for 1-3 days
           textColor = '#333'; // Darker text for visibility
         } else if (daysPassed <= 7) {
-          badgeColor = '#8B0000'; // Dark burgundy red for >7
+          badgeColor = '#ff9800'; // Orange for 4-7 days
         } else {
-          badgeColor = '#e74c3c'; // Red for >7 days
+          badgeColor = '#8B0000'; // Dark burgundy red for >7 days (was #e74c3c)
         }
 
-        // Add badge to header
-        cardHeader += `<div class="age-badge${daysPassed > 7 ? ' pulsing' : ''}"
+        // Add badge to header - removed pulsing class since we're not using the animation
+        cardHeader += `<div class="age-badge"
                             style="background-color: ${badgeColor}; color: ${textColor};">${daysPassed > 9 ? '9+' : daysPassed}</div>`;
       }
     }

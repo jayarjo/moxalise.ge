@@ -1936,6 +1936,7 @@ a:hover {
 /* Remove pulsing animation and just keep a static badge */
 .age-badge.pulsing {
   /* No animation, just a static badge */
+  /* Note: The pulsing class is still added in JS but has no visual effect */
 }
 
 .waiting-days {
