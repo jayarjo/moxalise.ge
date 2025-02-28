@@ -648,3 +648,59 @@ function calculateDaysPassed(dateString) {
     return 0;
   }
 }
+
+/**
+ * Extract the date from the last update in the განახლებები field
+ * Format example: "27/02 22:45: 501441919. @ნათია ქურციკიძე: ..."
+ * @param {string} updatesString - The განახლებები field content
+ * @returns {Date|null} - Date object of the last update or null if no updates
+ */
+function getLastUpdateDate(updatesString) {
+  if (!updatesString || typeof updatesString !== 'string' || updatesString.trim() === '') {
+    return null;
+  }
+
+  try {
+    // Split by newlines to get individual updates
+    const updates = updatesString.split('\n').filter(update => update.trim() !== '');
+
+    // If no updates, return null
+    if (updates.length === 0) {
+      return null;
+    }
+
+    // Get the last update (most recent)
+    const lastUpdate = updates[updates.length - 1].trim();
+
+    // Extract the date part (expected format: "DD/MM HH:MM: ...")
+    const dateMatch = lastUpdate.match(/^(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{1,2})/);
+
+    if (!dateMatch) {
+      console.error(`Could not extract date from update: "${lastUpdate}"`);
+      return null;
+    }
+
+    // Extract date components
+    const day = parseInt(dateMatch[1], 10);
+    const month = parseInt(dateMatch[2], 10) - 1; // Months are 0-indexed in JS
+    const hours = parseInt(dateMatch[3], 10);
+    const minutes = parseInt(dateMatch[4], 10);
+
+    // Use current year
+    const currentYear = new Date().getFullYear();
+
+    // Create date object
+    const date = new Date(currentYear, month, day, hours, minutes);
+
+    // Validate the date
+    if (isNaN(date.getTime())) {
+      console.error(`Invalid date created from update: "${lastUpdate}"`);
+      return null;
+    }
+
+    return date;
+  } catch (error) {
+    console.error(`Error extracting date from updates: ${error.message}`);
+    return null;
+  }
+}

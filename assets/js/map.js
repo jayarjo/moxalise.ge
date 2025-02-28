@@ -316,17 +316,29 @@ function setupMarkers() {
         // Get registration date from the item - only use დამატების თარიღი field
         const regDateStr = item['დამატების თარიღი'];
 
-        // Debug registration date
-        console.log('Registration date for item', index, ':', regDateStr);
+        // Calculate days since registration
+        const daysSinceRegistration = calculateDaysPassed(regDateStr);
 
-        // Calculate days passed
-        const daysPassed = calculateDaysPassed(regDateStr);
+        // Get last update date if available
+        const updatesStr = item['განახლებები'];
+        const lastUpdateDate = getLastUpdateDate(updatesStr);
 
-        // Debug days passed
-        console.log('Days passed for item', index, ':', daysPassed);
+        // Calculate days since last interaction
+        let daysSinceLastInteraction = null;
+        if (lastUpdateDate) {
+          // Convert Date object to string for calculateDaysPassed
+          const lastUpdateDateStr =
+            lastUpdateDate.toLocaleDateString('en-US') +
+            ' ' +
+            lastUpdateDate.toLocaleTimeString('en-US');
+          daysSinceLastInteraction = calculateDaysPassed(lastUpdateDateStr);
+        }
 
-        // Store days passed for tooltip display
-        item._daysPassed = daysPassed;
+        // Use the most recent date for badge display
+        let daysPassed = daysSinceRegistration;
+        if (daysSinceLastInteraction !== null && daysSinceLastInteraction < daysSinceRegistration) {
+          daysPassed = daysSinceLastInteraction;
+        }
 
         // Only add badge if we have valid days
         if (daysPassed > 0) {

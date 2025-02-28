@@ -166,8 +166,29 @@ function createSidebarCards() {
       // Get registration date from the item - only use დამატების თარიღი field
       const regDateStr = item['დამატების თარიღი'];
 
-      // Calculate days passed
-      const daysPassed = calculateDaysPassed(regDateStr);
+      // Calculate days since registration
+      const daysSinceRegistration = calculateDaysPassed(regDateStr);
+
+      // Get last update date if available
+      const updatesStr = item['განახლებები'];
+      const lastUpdateDate = getLastUpdateDate(updatesStr);
+
+      // Calculate days since last interaction
+      let daysSinceLastInteraction = null;
+      if (lastUpdateDate) {
+        // Convert Date object to string for calculateDaysPassed
+        const lastUpdateDateStr =
+          lastUpdateDate.toLocaleDateString('en-US') +
+          ' ' +
+          lastUpdateDate.toLocaleTimeString('en-US');
+        daysSinceLastInteraction = calculateDaysPassed(lastUpdateDateStr);
+      }
+
+      // Use the most recent date for badge display
+      let daysPassed = daysSinceRegistration;
+      if (daysSinceLastInteraction !== null && daysSinceLastInteraction < daysSinceRegistration) {
+        daysPassed = daysSinceLastInteraction;
+      }
 
       // Store days passed for tooltip display
       item._daysPassed = daysPassed;
