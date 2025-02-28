@@ -1143,7 +1143,7 @@ function createTooltipHTML(feature, instanceId) {
   }
 
   // Close the scrollable div
-  html += `</div>`;
+  html += '</div>';
 
   // Add directions link if lat and lon are available
   if (data.lat && data.lon) {
@@ -1154,7 +1154,7 @@ function createTooltipHTML(feature, instanceId) {
         </div>`;
   }
 
-  html += `</div>`;
+  html += '</div>';
   return html;
 }
 

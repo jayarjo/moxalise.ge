@@ -6,7 +6,7 @@
   "scripts": {
     "format": "prettier --write \"**/*.{js,html,css,json}\"",
     "lint": "eslint \"assets/js/**/*.js\" --fix",
-    "format-all": "npm run format && npm run lint",
+    "format-all": "npm run format && npm run lint"
   },
   "repository": "git@github.com:jayarjo/moxalise.ge.git",
   "license": "MIT",
