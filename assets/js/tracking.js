@@ -75,4 +75,4 @@ function showMyLocation() {
     // Geolocation not supported by the browser
     alert('თქვენი ბრაუზერი არ უჭერს მხარს გეოლოკაციას');
   }
-} 
+}
