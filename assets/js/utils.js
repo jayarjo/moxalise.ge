@@ -574,8 +574,6 @@ function ensureMapLayers(map) {
 function calculateDaysPassed(dateString) {
   // Check if dateString is valid
   if (!dateString || (typeof dateString === 'string' && dateString.trim() === '')) {
-    // Keep error logging
-    console.error('No date string provided');
     return null;
   }
 
@@ -672,8 +670,9 @@ function getLastUpdateDate(updatesString) {
     // Get the last update (most recent)
     const lastUpdate = updates[updates.length - 1].trim();
 
-    // Extract the date part (expected format: "DD/MM HH:MM: ...")
-    const dateMatch = lastUpdate.match(/^(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{1,2})/);
+    // Extract the date part, accounting for leading dash (expected format: "- DD/MM HH:MM: ...")
+    // This regex matches: optional dash, optional whitespace, then the date pattern
+    const dateMatch = lastUpdate.match(/^\s*-?\s*(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{1,2})/);
 
     if (!dateMatch) {
       console.error(`Could not extract date from update: "${lastUpdate}"`);
