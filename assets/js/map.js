@@ -1,5 +1,8 @@
 // Map functionality
 
+// Constants
+const MAX_ZOOM_LEVEL = 17.3;
+
 // Map initialization
 function initializeMap() {
     // Calculate bounds of all points
@@ -37,7 +40,7 @@ function initializeMap() {
                 maxzoom: 19
             }]
         },
-        maxZoom: 17.3,  // Set maximum zoom limit to 17.3
+        maxZoom: MAX_ZOOM_LEVEL,  // Set maximum zoom limit
         bounds: [
             [bounds.west - 0.1, bounds.south - 0.1], // Add padding to bounds
             [bounds.east + 0.1, bounds.north + 0.1]
@@ -50,7 +53,7 @@ function initializeMap() {
     // Add navigation controls
     const nav = new maplibregl.NavigationControl({
         visualizePitch: true,
-        maxZoom: 17.3 // Ensure navigation controls respect the max zoom
+        maxZoom: MAX_ZOOM_LEVEL // Ensure navigation controls respect the max zoom
     });
     map.addControl(nav, 'top-right');
 
@@ -74,8 +77,8 @@ function initializeMap() {
         
         // Add zoom limit check for mouse wheel and touch zoom
         map.on('zoom', function() {
-            if (map.getZoom() > 17.3) {
-                map.setZoom(17.3);
+            if (map.getZoom() > MAX_ZOOM_LEVEL) {
+                map.setZoom(MAX_ZOOM_LEVEL);
             }
         });
         
@@ -703,7 +706,7 @@ function showMyLocation() {
                 // Fly to the user's location
                 map.flyTo({
                     center: [userLng, userLat],
-                    zoom: Math.min(13, 17.3), // Limit zoom to max 17.3
+                    zoom: Math.min(13, MAX_ZOOM_LEVEL), // Limit zoom to max 17.3
                     duration: 1500
                 });
 
@@ -757,17 +760,17 @@ function toggleSatellite() {
     const standardStyle = {
         version: 8,
         sources: {
-            'osm': {
+            'raster-tiles': {
                 type: 'raster',
-                tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                tiles: ['https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
                 tileSize: 256,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution: '© <a href="https://carto.com/attributions">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }
         },
         layers: [{
-            id: 'osm-tiles',
+            id: 'simple-tiles',
             type: 'raster',
-            source: 'osm',
+            source: 'raster-tiles',
             minzoom: 0,
             maxzoom: 19
         }]
@@ -805,8 +808,9 @@ function toggleSatellite() {
 
     // After the style is loaded, restore center and zoom and reapply any custom layers
     map.once('styledata', function () {
+        // Restore previous view position
         map.setCenter(currentCenter);
-        map.setZoom(currentZoom);
+        map.setZoom(Math.min(currentZoom, MAX_ZOOM_LEVEL)); // Respect max zoom limit
 
         // Re-add data sources and layers if needed
         if (sampleData.length > 0) {
@@ -865,6 +869,16 @@ function toggleSatellite() {
             // Reapply any map event handlers
             addMapEventHandlers();
         }
+        
+        // Re-add zoom limit check
+        map.on('zoom', function() {
+            if (map.getZoom() > MAX_ZOOM_LEVEL) {
+                map.setZoom(MAX_ZOOM_LEVEL);
+            }
+        });
+        
+        // If markers were removed when changing styles, recreate them
+        setupMarkers();
     });
 }
 
