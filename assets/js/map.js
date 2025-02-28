@@ -311,6 +311,39 @@ function setupMarkers() {
       shadowEl.className = 'map-pin-shadow';
       el.appendChild(shadowEl);
 
+      // Add age badge for pending requests
+      if (status === 'მომლოდინე') {
+        // Get registration date from the item
+        const regDateStr = item['რეგისტრაციის თარიღი'];
+
+        // Calculate days passed
+        const daysPassed = calculateDaysPassed(regDateStr);
+
+        // Store days passed for tooltip display
+        item._daysPassed = daysPassed;
+
+        // Only add badge if we have valid days
+        if (daysPassed > 0) {
+          // Create badge element
+          const badge = document.createElement('div');
+          badge.className = 'age-badge';
+          badge.textContent = daysPassed;
+
+          // Set badge color based on age
+          if (daysPassed <= 3) {
+            badge.style.backgroundColor = '#ffeb3b'; // Yellow for 1-3 days
+            badge.style.color = '#333'; // Darker text for visibility
+          } else if (daysPassed <= 7) {
+            badge.style.backgroundColor = '#ff9800'; // Orange for 4-7 days
+          } else {
+            badge.style.backgroundColor = '#e74c3c'; // Red for >7 days
+            badge.classList.add('pulsing'); // Add pulsing animation
+          }
+
+          container.appendChild(badge);
+        }
+      }
+
       // Only apply offset if we have more than one item at this location
       let offsetLon = item.lon;
       let offsetLat = item.lat;
@@ -1040,10 +1073,16 @@ function createTooltipHTML(feature, instanceId) {
   // Add ID at the top of the tooltip using the CSS classes
   html += `<p class="id-field"><span class="id-label">ID:</span> <span class="id-value">${data.id || ''}</span></p>`;
 
+  // Add waiting days information for pending requests
+  const status = data['სტატუსი\n(მომლოდინე/ დასრულებულია)'];
+  if (status === 'მომლოდინე' && data._daysPassed > 0) {
+    html += `<p class="waiting-days">ლოდინის დღეები: ${data._daysPassed}</p>`;
+  }
+
   // Get all keys except internal ones and those containing 'დისკუსია'
   const keys = Object.keys(data).filter(
     key =>
-      !['id', 'fillColor', 'strokeColor', 'lat', 'lon', 'inGroup'].includes(key) &&
+      !['id', 'fillColor', 'strokeColor', 'lat', 'lon', 'inGroup', '_daysPassed'].includes(key) &&
       !key.includes('დისკუსია')
   );
 

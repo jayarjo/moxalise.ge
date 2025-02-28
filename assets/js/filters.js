@@ -967,6 +967,31 @@ function updateFeatures(filtered = false) {
       color = '#95a5a6'; // Gray for unknown/empty status
     }
 
+    // Add age information for pending requests
+    if (status === 'მომლოდინე') {
+      // Get registration date from the item
+      const regDateStr = item['რეგისტრაციის თარიღი'];
+
+      // Calculate days passed
+      const daysPassed = calculateDaysPassed(regDateStr);
+
+      // Store days passed for tooltip display
+      item._daysPassed = daysPassed;
+
+      // Calculate badge color based on age
+      if (daysPassed > 0) {
+        let badgeColor;
+        if (daysPassed <= 3) {
+          badgeColor = '#ffeb3b'; // Yellow for 1-3 days
+        } else if (daysPassed <= 7) {
+          badgeColor = '#ff9800'; // Orange for 4-7 days
+        } else {
+          badgeColor = '#e74c3c'; // Red for >7 days
+        }
+        item._badgeColor = badgeColor;
+      }
+    }
+
     const key = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
     if (!locationGroups[key]) {
       locationGroups[key] = [];

@@ -564,3 +564,35 @@ function ensureMapLayers(map) {
     return false;
   }
 }
+
+/**
+ * Calculate the number of days passed since a given date string
+ * @param {string} dateString - The date string to calculate days from
+ * @return {number} - Number of days passed (0 if invalid date)
+ */
+function calculateDaysPassed(dateString) {
+  if (!dateString) return 0;
+
+  try {
+    // Parse the date string
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) return 0;
+
+    // Get current date (without time)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Calculate difference in milliseconds
+    const diffMs = today.getTime() - date.getTime();
+
+    // Convert to days
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    return diffDays;
+  } catch (error) {
+    console.error('Error calculating days passed:', error);
+    return 0;
+  }
+}

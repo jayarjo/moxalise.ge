@@ -157,11 +157,47 @@ function createSidebarCards() {
     // Filter out keys that contain "@:" or are exactly ":"
     const filteredKeys = keys.filter(key => !key.includes('@:') && key !== ':');
 
+    // Create card header with age badge for pending requests
+    let cardHeader = `<div class="card-header">
+                <h3 class="card-title">${needsTitle || filteredKeys[0] || ''}</h3>`;
+
+    // Add age badge for pending requests
+    if (status === 'მომლოდინე') {
+      // Get registration date from the item
+      const regDateStr = item['რეგისტრაციის თარიღი'];
+
+      // Calculate days passed
+      const daysPassed = calculateDaysPassed(regDateStr);
+
+      // Store days passed for tooltip display
+      item._daysPassed = daysPassed;
+
+      // Only add badge if we have valid days
+      if (daysPassed > 0) {
+        // Determine badge color based on age
+        let badgeColor,
+          textColor = 'white';
+        if (daysPassed <= 3) {
+          badgeColor = '#ffeb3b'; // Yellow for 1-3 days
+          textColor = '#333'; // Darker text for visibility
+        } else if (daysPassed <= 7) {
+          badgeColor = '#ff9800'; // Orange for 4-7 days
+        } else {
+          badgeColor = '#e74c3c'; // Red for >7 days
+        }
+
+        // Add badge to header
+        cardHeader += `<div class="age-badge${daysPassed > 7 ? ' pulsing' : ''}"
+                            style="background-color: ${badgeColor}; color: ${textColor};">${daysPassed}</div>`;
+      }
+    }
+
+    // Close header
+    cardHeader += `<span class="expand-icon">▼</span>
+            </div>`;
+
     let cardContent = `
-            <div class="card-header">
-                <h3 class="card-title">${needsTitle || filteredKeys[0] || ''}</h3>
-                <span class="expand-icon">▼</span>
-            </div>
+            ${cardHeader}
             <div class="card-content">
                 <p class="id-field">
                     <span class="id-label">ID:</span> <span class="id-value">${item.id || ''}</span>
