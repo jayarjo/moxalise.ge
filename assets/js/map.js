@@ -33,10 +33,11 @@ function initializeMap() {
         topographic: {
           type: 'raster',
           // Using Esri's World Topographic Map which has good English labels globally
-          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'],
+          tiles: [
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+          ],
           tileSize: 256,
-          attribution:
-            '© <a href="https://www.esri.com/">Esri</a>',
+          attribution: '© <a href="https://www.esri.com/">Esri</a>',
         },
         /* Alternative if Esri doesn't meet your needs:
         topographic: {
@@ -86,7 +87,7 @@ function initializeMap() {
   map.addControl(
     new maplibregl.AttributionControl({
       compact: true,
-      customAttribution: '© <a href="https://moxalise.ge">moxalise.ge</a>'
+      customAttribution: '© <a href="https://moxalise.ge">moxalise.ge</a>',
     })
   );
 
@@ -911,8 +912,7 @@ function toggleMapStyle(style) {
         type: 'raster',
         tiles: ['https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
         tileSize: 256,
-        attribution:
-          '© <a href="https://carto.com">CARTO</a> & <a href="https://osm.org">OSM</a>',
+        attribution: '© <a href="https://carto.com">CARTO</a> & <a href="https://osm.org">OSM</a>',
       },
     },
     layers: [
@@ -935,8 +935,7 @@ function toggleMapStyle(style) {
           'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         ],
         tileSize: 256,
-        attribution:
-          '© <a href="https://www.esri.com/">Esri</a>',
+        attribution: '© <a href="https://www.esri.com/">Esri</a>',
       },
     },
     layers: [
@@ -957,10 +956,11 @@ function toggleMapStyle(style) {
       topographic: {
         type: 'raster',
         // Using Esri's World Topographic Map which has good English labels globally
-        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'],
+        tiles: [
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+        ],
         tileSize: 256,
-        attribution:
-          '© <a href="https://www.esri.com/">Esri</a>',
+        attribution: '© <a href="https://www.esri.com/">Esri</a>',
       },
     },
     layers: [
@@ -1169,7 +1169,7 @@ function ensureMapLayers(map) {
 
       // Add polygon layer if it doesn't exist
       if (!hasPolygonLayer) {
-        console.error("Adding 'location-polygons' layer");
+        console.log("Adding 'location-polygons' layer");
         map.addLayer({
           id: 'location-polygons',
           type: 'fill',
@@ -1197,7 +1197,7 @@ function ensureMapLayers(map) {
 
       // Add outline layer if it doesn't exist
       if (!hasOutlineLayer) {
-        console.error("Adding 'location-polygons-outline' layer");
+        console.log("Adding 'location-polygons-outline' layer");
         map.addLayer({
           id: 'location-polygons-outline',
           type: 'line',
