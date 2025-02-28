@@ -1,0 +1,17 @@
+{
+  "name": "moxalise.ge",
+  "version": "1.0.0",
+  "description": "Website for helping people affected by heavy snowfall in Guria region of Georgia",
+  "main": "index.html",
+  "scripts": {
+    "format": "prettier --write \"**/*.{js,html,css,json}\"",
+    "lint": "eslint \"assets/js/**/*.js\" --fix",
+    "format-all": "npm run format && npm run lint"
+  },
+  "repository": "git@github.com:jayarjo/moxalise.ge.git",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5"
+  }
+}

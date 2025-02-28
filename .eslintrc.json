@@ -1,0 +1,63 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "script"
+  },
+  "rules": {
+    "indent": ["error", 2],
+    "linebreak-style": ["error", "unix"],
+    "quotes": ["error", "single", { "avoidEscape": true }],
+    "semi": ["error", "always"],
+    "no-unused-vars": "off",
+    "no-undef": "off",
+    "no-redeclare": "off",
+    "no-useless-escape": "off"
+  },
+  "globals": {
+    "d3": "readonly",
+    "maplibregl": "readonly",
+    "tippy": "readonly",
+    "map": "writable",
+    "sampleData": "writable",
+    "locationMarkers": "writable",
+    "userLocationMarker": "writable",
+    "customDropdowns": "writable",
+    "currentSearchText": "writable",
+    "tippyInstances": "writable",
+    "initializeSearch": "writable",
+    "initInstructionTabs": "writable",
+    "submitNotification": "writable",
+    "initializeFilters": "writable",
+    "initializeMap": "writable",
+    "formatValue": "writable",
+    "simpleHighlightPolygon": "writable",
+    "isMapReady": "writable",
+    "highlightPolygon": "writable",
+    "ensureMapLayers": "writable",
+    "directHighlightPolygon": "writable",
+    "isURL": "writable",
+    "calculatePointOffset": "writable",
+    "createPolygonCoordinates": "writable",
+    "updateFeatures": "writable",
+    "openHelpModal": "writable",
+    "closeHelpModal": "writable",
+    "openHelpOfferModal": "writable",
+    "closeHelpOfferModal": "writable",
+    "closeNotificationModal": "writable",
+    "sendNotification": "writable",
+    "openInstructionsModal": "writable",
+    "closeInstructionsModal": "writable",
+    "toggleTabs": "writable",
+    "toggleMobileSidebar": "writable",
+    "toggleLegend": "writable",
+    "togglePanel": "writable",
+    "showMyLocation": "writable",
+    "toggleSatellite": "writable",
+    "closeTooltip": "writable"
+  }
+}
