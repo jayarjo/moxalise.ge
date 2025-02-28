@@ -967,52 +967,6 @@ function updateFeatures(filtered = false) {
       color = '#95a5a6'; // Gray for unknown/empty status
     }
 
-    // Add age information for pending requests
-    if (status === 'მომლოდინე') {
-      // Get registration date from the item
-      const regDateStr = item['რეგისტრაციის თარიღი'];
-
-      // Calculate days since registration
-      const daysSinceRegistration = calculateDaysPassed(regDateStr);
-
-      // Get last update date if available
-      const updatesStr = item['განახლებები'];
-      const lastUpdateDate = getLastUpdateDate(updatesStr);
-
-      // Calculate days since last interaction
-      let daysSinceLastInteraction = null;
-      if (lastUpdateDate) {
-        // Convert Date object to string for calculateDaysPassed
-        const lastUpdateDateStr =
-          lastUpdateDate.toLocaleDateString('en-US') +
-          ' ' +
-          lastUpdateDate.toLocaleTimeString('en-US');
-        daysSinceLastInteraction = calculateDaysPassed(lastUpdateDateStr);
-      }
-
-      // Use the most recent date for badge display
-      let daysPassed = daysSinceRegistration;
-      if (daysSinceLastInteraction !== null && daysSinceLastInteraction < daysSinceRegistration) {
-        daysPassed = daysSinceLastInteraction;
-      }
-
-      // Store days passed for tooltip display
-      item._daysPassed = daysPassed;
-
-      // Calculate badge color based on age
-      if (daysPassed > 0) {
-        let badgeColor;
-        if (daysPassed <= 3) {
-          badgeColor = '#ffeb3b'; // Yellow for 1-3 days
-        } else if (daysPassed <= 7) {
-          badgeColor = '#ff9800'; // Orange for 4-7 days
-        } else {
-          badgeColor = '#e74c3c'; // Red for >7 days
-        }
-        item._badgeColor = badgeColor;
-      }
-    }
-
     const key = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
     if (!locationGroups[key]) {
       locationGroups[key] = [];
