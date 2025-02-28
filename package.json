@@ -6,12 +6,14 @@
   "scripts": {
     "format": "prettier --write \"**/*.{js,html,css,json}\"",
     "lint": "eslint \"assets/js/**/*.js\" --fix",
-    "format-all": "npm run format && npm run lint"
+    "format-all": "npm run format && npm run lint",
+    "serve": "live-server --port=3000 --open=index.html --watch=index.html,assets/"
   },
   "repository": "git@github.com:jayarjo/moxalise.ge.git",
   "license": "MIT",
   "devDependencies": {
     "eslint": "^8.57.0",
+    "live-server": "^1.2.2",
     "prettier": "^3.2.5"
   }
 }
