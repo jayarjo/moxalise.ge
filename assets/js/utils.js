@@ -568,31 +568,31 @@ function ensureMapLayers(map) {
 /**
  * Calculate days passed since a given date string.
  * Handles date strings in format like "2/27/2025 15:22:00" or other standard formats.
- * @param {string|Date} date - The date string to calculate days from
+ * @param {string|Date} dateString - The date string to calculate days from
  * @returns {number} - Number of days passed (0 if invalid date)
  */
-function calculateDaysPassed(date) {
+function calculateDaysPassed(dateString) {
   // Check if dateString is valid
-  if (!date?.trim()) {
+  if (!dateString || (typeof dateString === 'string' && dateString.trim() === '')) {
     // Keep error logging
     console.error('No date string provided');
-    return 0;
+    return null;
   }
 
   try {
     // Remove debug logging
     // Try to parse the date
-    let date = new Date(date);
+    let date = new Date(dateString);
 
     // Check if date is valid
     if (isNaN(date.getTime())) {
-      console.error(`Invalid date: "${date}"`);
+      console.error(`Invalid date: "${dateString}"`);
 
       // Try manual parsing for format like "2/27/2025 15:22:00"
       console.error('Standard date parsing failed, trying manual parsing');
 
       // Extract components from the date string
-      const parts = date.split(' ');
+      const parts = dateString.split(' ');
       if (parts.length >= 1) {
         const datePart = parts[0];
         const dateComponents = datePart.split('/');
@@ -625,12 +625,12 @@ function calculateDaysPassed(date) {
 
           // Check if the manually parsed date is valid
           if (isNaN(date.getTime())) {
-            console.error(`Invalid date after all parsing attempts: "${date}"`);
-            return 0;
+            console.error(`Invalid date after all parsing attempts: "${dateString}"`);
+            return null;
           }
         } else {
-          console.error(`Invalid date format: "${date}"`);
-          return 0;
+          console.error(`Invalid date format: "${dateString}"`);
+          return null;
         }
       }
     }
@@ -645,7 +645,7 @@ function calculateDaysPassed(date) {
     return diffDays;
   } catch (error) {
     console.error(`Error calculating days passed: ${error.message}`);
-    return 0;
+    return null;
   }
 }
 
