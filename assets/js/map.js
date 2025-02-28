@@ -2,6 +2,8 @@
 
 // Constants
 const MAX_ZOOM_LEVEL = 17.3;
+// Remove API key as it's not needed for Esri
+// const THUNDERFOREST_API_KEY = 'apikey=6170aad10dfd42a38d4d8c709a536f38';
 
 // Map initialization
 function initializeMap() {
@@ -28,19 +30,29 @@ function initializeMap() {
     style: {
       version: 8,
       sources: {
-        'raster-tiles': {
+        topographic: {
           type: 'raster',
-          tiles: ['https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
+          // Using Esri's World Topographic Map which has good English labels globally
+          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'],
           tileSize: 256,
           attribution:
-            '© <a href="https://carto.com/attributions">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            '© <a href="https://www.esri.com/">Esri</a>',
         },
+        /* Alternative if Esri doesn't meet your needs:
+        topographic: {
+          type: 'raster',
+          tiles: ['https://a.tile.opentopomap.org/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          attribution:
+            '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+        },
+        */
       },
       layers: [
         {
-          id: 'simple-tiles',
+          id: 'topographic-tiles',
           type: 'raster',
-          source: 'raster-tiles',
+          source: 'topographic',
           minzoom: 0,
           maxzoom: 19,
         },
@@ -74,8 +86,18 @@ function initializeMap() {
   map.addControl(
     new maplibregl.AttributionControl({
       compact: true,
+      customAttribution: '© <a href="https://moxalise.ge">moxalise.ge</a>'
     })
   );
+
+  // Initialize the style toggle button to reflect topographic as default
+  const styleToggleButton = document.querySelector('.satellite-toggle');
+  if (styleToggleButton) {
+    styleToggleButton.classList.add('active');
+    styleToggleButton.setAttribute('data-style', 'topographic');
+    styleToggleButton.title = 'Switch to standard view';
+    styleToggleButton.textContent = 'Topo';
+  }
 
   // Initialize map with data
   map.on('load', function () {
@@ -246,6 +268,18 @@ function updateMapFeatures() {
 
 // Function to setup markers on the map
 function setupMarkers() {
+  // First clear any existing markers to prevent duplication
+  if (locationMarkers && locationMarkers.length > 0) {
+    console.log(`Cleaning up ${locationMarkers.length} markers from previous call`);
+    locationMarkers.forEach(markerInfo => {
+      if (markerInfo.marker) {
+        markerInfo.marker.remove();
+      }
+    });
+    // Reset the markers array
+    locationMarkers = [];
+  }
+
   // Group markers by location to detect overlapping pins
   const locationGroups = {};
 
@@ -420,18 +454,23 @@ function setupMarkers() {
           markerEl.style.left = `${clickX}px`;
         }
 
-        // Hide any existing tooltips
-        Object.values(window.tippyInstances || {}).forEach(instance => {
-          if (instance && instance.hide) {
-            instance.hide();
+        // Hide and destroy any existing tooltips
+        Object.entries(window.tippyInstances || {}).forEach(([key, instance]) => {
+          if (instance) {
+            if (instance.hide) {
+              instance.hide();
+            }
             if (instance.destroy) {
+              console.log(`Destroying tippy instance ${key} for pin click`);
               instance.destroy();
+              delete window.tippyInstances[key];
             }
           }
         });
 
         // Create new tooltip instance
         window.tippyInstances = window.tippyInstances || {};
+        console.log(`Creating new tippy instance for pin id ${index}`);
         window.tippyInstances[index] = tippy(markerEl, {
           content: tooltipContent,
           allowHTML: true,
@@ -498,6 +537,7 @@ function setupMarkers() {
   });
 
   // Store markers globally for later access
+  console.log(`Created ${markers.length} markers`);
   locationMarkers = markers;
 }
 
@@ -609,16 +649,24 @@ function addMapEventHandlers() {
       marker.style.left = `${clickX}px`;
     }
 
-    // Hide any existing tooltips first to ensure only one is shown at a time
-    Object.values(window.tippyInstances || {}).forEach(instance => {
-      if (instance && instance.hide) {
-        instance.hide();
+    // Hide and destroy any existing tooltips to prevent duplication
+    Object.entries(window.tippyInstances || {}).forEach(([key, instance]) => {
+      if (instance) {
+        if (instance.hide) {
+          instance.hide();
+        }
+        if (instance.destroy) {
+          console.log(`Destroying tippy instance ${key}`);
+          instance.destroy();
+          delete window.tippyInstances[key];
+        }
       }
     });
 
     // Create new instance on the marker element
     setTimeout(() => {
       window.tippyInstances = window.tippyInstances || {};
+      console.log(`Creating new tippy instance for id ${id}`);
       window.tippyInstances[id] = tippy(marker, {
         content: tooltipContent,
         allowHTML: true,
@@ -690,10 +738,18 @@ function addMapEventHandlers() {
 
   // Update tooltip positions when map moves
   map.on('move', function () {
-    // Hide click tooltips
-    Object.values(window.tippyInstances || {}).forEach(instance => {
-      if (instance && instance.state && instance.state.isVisible) {
-        instance.hide();
+    // Hide and destroy click tooltips to prevent accumulation
+    Object.entries(window.tippyInstances || {}).forEach(([key, instance]) => {
+      if (instance) {
+        if (instance.state && instance.state.isVisible) {
+          instance.hide();
+        }
+        // Completely destroy tooltips when map moves to prevent accumulation
+        if (instance.destroy) {
+          console.log(`Destroying tippy instance ${key} on map move`);
+          instance.destroy();
+          delete window.tippyInstances[key];
+        }
       }
     });
   });
@@ -810,10 +866,21 @@ function showMyLocation() {
   }
 }
 
-// Function to toggle satellite view
-function toggleSatellite() {
-  const button = document.querySelector('.satellite-toggle');
-  button.classList.toggle('active');
+// Function to toggle map styles (standard, satellite, topographic)
+function toggleMapStyle(style) {
+  // Get the current active style
+  const prevActiveButton = document.querySelector('.map-style-option.active');
+  if (prevActiveButton) {
+    prevActiveButton.classList.remove('active');
+  }
+
+  // Set the clicked button as active
+  if (style) {
+    const clickedButton = document.querySelector(`.map-style-option[data-style="${style}"]`);
+    if (clickedButton) {
+      clickedButton.classList.add('active');
+    }
+  }
 
   // Close any open tooltips before changing the map style
   if (window.tippyInstances) {
@@ -822,6 +889,18 @@ function toggleSatellite() {
         instance.hide();
       }
     });
+  }
+
+  // Clean up existing markers to prevent duplication
+  if (locationMarkers && locationMarkers.length > 0) {
+    console.log(`Removing ${locationMarkers.length} existing markers`);
+    locationMarkers.forEach(markerInfo => {
+      if (markerInfo.marker) {
+        markerInfo.marker.remove();
+      }
+    });
+    // Clear the markers array
+    locationMarkers = [];
   }
 
   // Define the map styles
@@ -833,7 +912,7 @@ function toggleSatellite() {
         tiles: ['https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
         tileSize: 256,
         attribution:
-          '© <a href="https://carto.com/attributions">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          '© <a href="https://carto.com">CARTO</a> & <a href="https://osm.org">OSM</a>',
       },
     },
     layers: [
@@ -857,7 +936,7 @@ function toggleSatellite() {
         ],
         tileSize: 256,
         attribution:
-          '&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+          '© <a href="https://www.esri.com/">Esri</a>',
       },
     },
     layers: [
@@ -871,14 +950,66 @@ function toggleSatellite() {
     ],
   };
 
+  // Try this alternative if Esri doesn't work well in your region
+  const topographicStyle = {
+    version: 8,
+    sources: {
+      topographic: {
+        type: 'raster',
+        // Using Esri's World Topographic Map which has good English labels globally
+        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'],
+        tileSize: 256,
+        attribution:
+          '© <a href="https://www.esri.com/">Esri</a>',
+      },
+    },
+    layers: [
+      {
+        id: 'topographic-tiles',
+        type: 'raster',
+        source: 'topographic',
+        minzoom: 0,
+        maxzoom: 19,
+      },
+    ],
+  };
+
+  // ALTERNATIVE STYLE - Uncomment and replace above if Esri doesn't work well
+  /*
+  const topographicStyle = {
+    version: 8,
+    sources: {
+      topographic: {
+        type: 'raster',
+        tiles: ['https://a.tile.opentopomap.org/{z}/{x}/{y}.png'],
+        tileSize: 256,
+        attribution:
+          '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+      },
+    },
+    layers: [
+      {
+        id: 'topographic-tiles',
+        type: 'raster',
+        source: 'topographic',
+        minzoom: 0,
+        maxzoom: 17,
+      },
+    ],
+  };
+  */
+
   // Save the current center and zoom
   const currentCenter = map.getCenter();
   const currentZoom = map.getZoom();
 
-  // Toggle between map styles
-  if (button.classList.contains('active')) {
+  // Set the selected style
+  if (style === 'satellite') {
     map.setStyle(satelliteStyle);
+  } else if (style === 'topo') {
+    map.setStyle(topographicStyle);
   } else {
+    // Default to standard style
     map.setStyle(standardStyle);
   }
 
@@ -894,6 +1025,7 @@ function toggleSatellite() {
       const features = updateFeatures(true);
 
       if (!map.getSource('locations')) {
+        console.log('Adding locations source');
         map.addSource('locations', {
           type: 'geojson',
           data: {
@@ -902,6 +1034,7 @@ function toggleSatellite() {
           },
         });
       } else {
+        console.log('Updating existing locations source');
         map.getSource('locations').setData({
           type: 'FeatureCollection',
           features: features,
@@ -910,6 +1043,7 @@ function toggleSatellite() {
 
       // Re-add layers if they don't exist
       if (!map.getLayer('location-polygons')) {
+        console.log('Adding location-polygons layer');
         map.addLayer({
           id: 'location-polygons',
           type: 'fill',
@@ -936,6 +1070,7 @@ function toggleSatellite() {
       }
 
       if (!map.getLayer('location-polygons-outline')) {
+        console.log('Adding location-polygons-outline layer');
         map.addLayer({
           id: 'location-polygons-outline',
           type: 'line',
@@ -958,9 +1093,15 @@ function toggleSatellite() {
       }
     });
 
-    // If markers were removed when changing styles, recreate them
+    // Now that we've cleared the old markers, create new ones
+    console.log('Setting up new markers after style change');
     setupMarkers();
   });
+}
+
+// Alias the old function name to the new one for backwards compatibility
+function toggleSatellite() {
+  toggleMapStyle('satellite');
 }
 
 // Check if the map is ready with all necessary layers and sources
@@ -1157,10 +1298,13 @@ function createTooltipHTML(feature, instanceId) {
 function closeTooltip(id) {
   // Ensure id is treated consistently, whether it's passed as a string or number
   const instanceId = String(id);
+  console.log(`Closing tooltip with id: ${instanceId}`);
+
   if (window.tippyInstances && window.tippyInstances[instanceId]) {
     window.tippyInstances[instanceId].hide();
     // Add proper cleanup by destroying the tooltip instance
     if (window.tippyInstances[instanceId].destroy) {
+      console.log(`Destroying tippy instance ${instanceId} from close button`);
       window.tippyInstances[instanceId].destroy();
     }
     // Remove the instance from our tracking object

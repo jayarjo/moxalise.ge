@@ -73,7 +73,8 @@ body {
 
 .tippy-box {
   max-width: 600px !important;
-  width: 90vw !important; /* 90% of viewport width for mobile */
+  width: 90vw !important;
+  /* 90% of viewport width for mobile */
   background-color: white;
   color: #333;
   border-radius: 8px;
@@ -83,7 +84,8 @@ body {
 
 @media (min-width: 768px) {
   .tippy-box {
-    width: auto !important; /* Reset for desktop */
+    width: auto !important;
+    /* Reset for desktop */
   }
 }
 
@@ -99,12 +101,14 @@ body {
   z-index: 3000;
   display: flex;
   flex-direction: column;
-  max-height: 80vh; /* Limit to 80% of viewport height */
+  max-height: 80vh;
+  /* Limit to 80% of viewport height */
 }
 
 .info-card-scrollable {
   overflow-y: auto;
-  max-height: calc(80vh - 80px); /* Account for header and footer */
+  max-height: calc(80vh - 80px);
+  /* Account for header and footer */
   padding-right: 5px;
   scrollbar-width: thin;
 }
@@ -738,14 +742,18 @@ a:hover {
   border: 3px solid black;
   z-index: 20;
   /* Ensure highlighted pin is above all others, even hovered ones */
-  transform: rotate(45deg) scale(1.5); /* Slightly reduce the scale for better visibility */
+  transform: rotate(45deg) scale(1.5);
+  /* Slightly reduce the scale for better visibility */
   transform-origin: center bottom;
-  box-shadow: 0 0 15px 5px rgba(255, 255, 0, 0.7); /* Add yellow glow effect */
+  box-shadow: 0 0 15px 5px rgba(255, 255, 0, 0.7);
+  /* Add yellow glow effect */
 }
 
 .map-pin.highlighted:hover {
-  transform: rotate(45deg) scale(1.6); /* Slightly larger on hover */
-  box-shadow: 0 0 20px 8px rgba(255, 255, 0, 0.8); /* Stronger glow on hover */
+  transform: rotate(45deg) scale(1.6);
+  /* Slightly larger on hover */
+  box-shadow: 0 0 20px 8px rgba(255, 255, 0, 0.8);
+  /* Stronger glow on hover */
 }
 
 .map-pin::after {
@@ -805,7 +813,8 @@ a:hover {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
-  display: block; /* Ensure selects are visible */
+  display: block;
+  /* Ensure selects are visible */
   background-color: white;
 }
 
@@ -933,23 +942,31 @@ a:hover {
 .location-button {
   position: fixed;
   bottom: 20px;
-  left: 210px; /* Position it next to the "მონაცემების პანელი" button */
-  width: 45px;
-  height: 45px;
+  left: 230px;
+  width: 36px;
+  /* Reduced from 45px */
+  height: 36px;
+  /* Reduced from 45px */
   padding: 0;
   background: #3498db;
   color: white;
   border: none;
-  border-radius: 50%;
+  border-radius: 18px;
+  /* Half of width/height */
   cursor: pointer;
   z-index: 1001;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  transition:
-    background 0.2s,
-    transform 0.2s;
+  transition: all 0.3s ease;
+}
+
+.location-button svg {
+  width: 20px;
+  /* Reduced from 24px */
+  height: 20px;
+  /* Reduced from 24px */
 }
 
 .location-button:hover {
@@ -958,26 +975,81 @@ a:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Add styles for the satellite toggle button */
-.satellite-toggle {
+/* Add styles for the map style toggle component */
+.map-style-toggle {
   position: fixed;
   bottom: 20px;
-  left: 350px; /* Position it next to the location button */
-  padding: 10px 20px;
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  left: 275px;
+  /* Adjusted position to account for smaller location button */
+  background: #fff;
+  border-radius: 18px;
+  /* Match the location button's rounded corners */
+  display: flex;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
   z-index: 1001;
+  border: 1px solid #ddd;
+  max-width: 190px;
+  /* Increased from 150px to give more room */
 }
 
-.satellite-toggle:hover {
-  background: #2980b9;
+.map-style-option {
+  padding: 6px 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.3s ease;
+  color: #333;
+  user-select: none;
+  text-align: center;
+  min-width: 48px;
+  white-space: nowrap;
+  overflow: visible;
+  letter-spacing: 0.2px;
 }
 
-.satellite-toggle.active {
-  background: #2c3e50;
+.map-style-option:hover {
+  background-color: #f0f0f0;
+}
+
+.map-style-option.active {
+  background-color: #3498db;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .location-button {
+    bottom: 20px;
+    left: 20px;
+    width: 34px;
+    /* Even slightly smaller on mobile */
+    height: 34px;
+    /* Even slightly smaller on mobile */
+  }
+
+  .location-button svg {
+    width: 18px;
+    /* Smaller icon on mobile */
+    height: 18px;
+  }
+
+  .map-style-toggle {
+    bottom: 70px;
+    left: 10px;
+    font-size: 11px;
+    /* Slightly smaller font */
+    max-width: 140px;
+    /* Increased width on mobile as well */
+  }
+
+  .map-style-option {
+    padding: 4px 6px;
+    /* Smaller padding on mobile */
+    min-width: 35px;
+    /* Increased from 30px to ensure Georgian text is visible */
+    font-size: 11px;
+  }
 }
 
 .user-location-marker {
@@ -994,25 +1066,13 @@ a:hover {
   0% {
     box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.6);
   }
+
   70% {
     box-shadow: 0 0 0 15px rgba(52, 152, 219, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(52, 152, 219, 0);
-  }
-}
-
-@media (max-width: 768px) {
-  .location-button {
-    bottom: 20px;
-    left: 20px;
-    width: 45px;
-    height: 45px;
-  }
-
-  .satellite-toggle {
-    bottom: 20px;
-    left: 75px; /* Adjust position to account for the circular button */
   }
 }
 
@@ -1263,7 +1323,8 @@ a:hover {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
   text-decoration: none;
-  display: none; /* Hidden by default, shown only on mobile */
+  display: none;
+  /* Hidden by default, shown only on mobile */
 }
 
 .location-share-button:hover {
@@ -1283,7 +1344,8 @@ a:hover {
   z-index: 2500;
   opacity: 0;
   transition: opacity 0.3s ease;
-  overflow: hidden; /* Prevent body scrolling when modal is open */
+  overflow: hidden;
+  /* Prevent body scrolling when modal is open */
 }
 
 .modal.active {
@@ -1420,7 +1482,8 @@ a:hover {
   }
 
   .location-share-button {
-    display: block; /* Show on mobile */
+    display: block;
+    /* Show on mobile */
     top: calc(100vh - 53px);
     left: calc(100vw - 159px);
     padding: 8px 12px;
@@ -1459,7 +1522,7 @@ a:hover {
   }
 }
 
-.modal.active ~ .mobile-sidebar-button {
+.modal.active~.mobile-sidebar-button {
   display: none !important;
 }
 
@@ -1661,7 +1724,8 @@ a:hover {
 .instructions-modal-body {
   padding: 0;
   overflow-y: auto;
-  max-height: calc(90vh - 60px); /* Subtract header height to ensure content fits */
+  max-height: calc(90vh - 60px);
+  /* Subtract header height to ensure content fits */
   flex: 1;
 }
 
@@ -1703,7 +1767,8 @@ a:hover {
   display: none;
   padding: 25px;
   overflow-y: auto;
-  max-height: calc(90vh - 110px); /* Subtract header and tabs height */
+  max-height: calc(90vh - 110px);
+  /* Subtract header and tabs height */
 }
 
 .instructions-content.active {
@@ -1769,11 +1834,13 @@ a:hover {
   }
 
   .instructions-modal-body {
-    max-height: calc(100vh - 50px); /* Adjust for smaller header on mobile */
+    max-height: calc(100vh - 50px);
+    /* Adjust for smaller header on mobile */
   }
 
   .instructions-content {
-    max-height: calc(100vh - 100px); /* Adjust for smaller header and tabs on mobile */
+    max-height: calc(100vh - 100px);
+    /* Adjust for smaller header and tabs on mobile */
     padding: 15px;
   }
 
@@ -1985,3 +2052,60 @@ a:hover {
     /* Keep the same positioning on mobile */
   }
 }
+
+
+/* Styles for map attribution to prevent overlapping */
+.maplibregl-ctrl-attrib {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+  max-width: 300px !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  padding: 2px 5px !important;
+  border-radius: 4px !important;
+  margin-bottom: 5px !important;
+  margin-right: 5px !important;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: #3498db !important;
+  display: inline-block !important;
+  margin-right: 5px !important;
+}
+
+/* Make attribution cleaner on mobile */
+@media (max-width: 768px) {
+  .maplibregl-ctrl-attrib {
+    font-size: 8px !important;
+    max-width: 200px !important;
+  }
+
+  .maplibregl-ctrl-attrib-inner {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+}
+
+/* Position controls and attribution better */
+.maplibregl-control-container {
+  z-index: 50 !important;
+}
+
+.maplibregl-ctrl-bottom-right {
+  bottom: 25px !important;
+  right: 10px !important;
+}
+
+.maplibregl-ctrl-bottom-left {
+  bottom: 25px !important;
+}
+
+/* Fix for mobile view */
+@media (max-width: 768px) {
+
+  .maplibregl-ctrl-bottom-left,
+  .maplibregl-ctrl-bottom-right {
+    bottom: 125px !important;
+    /* Position higher on mobile to avoid overlap with controls */
+  }
+}
+
