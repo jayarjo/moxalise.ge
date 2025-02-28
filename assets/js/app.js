@@ -157,65 +157,42 @@ function createSidebarCards() {
     // Filter out keys that contain "@:" or are exactly ":"
     const filteredKeys = keys.filter(key => !key.includes('@:') && key !== ':');
 
-    // Create card header with age badge for pending requests
-    let cardHeader = `<div class="card-header">
-                <h3 class="card-title">${needsTitle || filteredKeys[0] || ''}</h3>`;
-
-    // Add age badge for pending requests
-    if (status === 'მომლოდინე') {
-      // Get registration date from the item - only use დამატების თარიღი field
-      const regDateStr = item['დამატების თარიღი'];
-
-      // Calculate days since registration
-      const daysSinceRegistration = calculateDaysPassed(regDateStr);
-
-      // Get last update date if available
-      const updatesStr = item['განახლებები'];
-      const lastUpdateDate = getLastUpdateDate(updatesStr);
-
-      // Calculate days since last interaction
-      let daysSinceLastInteraction = null;
-      if (lastUpdateDate) {
-        daysSinceLastInteraction = calculateDaysPassed(lastUpdateDate);
-      }
-
-      // Use the most recent date for badge display
-      let daysPassed = daysSinceRegistration;
-      if (daysSinceLastInteraction !== null && daysSinceLastInteraction < daysSinceRegistration) {
-        daysPassed = daysSinceLastInteraction;
-      }
-
-      // Store days passed for tooltip display
-      item._daysPassed = daysPassed;
-
-      // Only add badge if we have valid days
-      if (daysPassed > 0) {
-        // Determine badge color based on age
-        let badgeColor,
-          textColor = 'white';
-        if (daysPassed <= 3) {
-          badgeColor = '#ffeb3b'; // Yellow for 1-3 days
-          textColor = '#333'; // Darker text for visibility
-        } else if (daysPassed <= 7) {
-          badgeColor = '#ff9800'; // Orange for 4-7 days
-        } else {
-          badgeColor = '#8B0000'; // Dark burgundy red for >7 days (was #e74c3c)
-        }
-
-        // Add badge to header - removed pulsing class since we're not using the animation
-        cardHeader += `<div class="age-badge"
-                            style="background-color: ${badgeColor}; color: ${textColor};">${daysPassed > 9 ? '9+' : daysPassed}</div>`;
-      }
-    }
-
-    // Close header
-    cardHeader += `<span class="expand-icon">▼</span>
-            </div>`;
-
     let cardContent = `
             <div class="card-header">
                 <h3 class="card-title">${needsTitle || filteredKeys[0] || ''}</h3>
                 <span class="expand-icon">▼</span>
+            </div>
+            <div class="card-content">
+                <p class="id-field">
+                    <span class="id-label">ID:</span> <span class="id-value">${item.id || ''}</span>
+                </p>
+                ${filteredKeys
+                  .slice(1)
+                  .map(key => {
+                    // Skip empty values or values that only contain colons or @:
+                    const value = item[key];
+                    if (
+                      value === undefined ||
+                      value === null ||
+                      value === '' ||
+                      value === ':' ||
+                      value === '@:' ||
+                      (typeof value === 'string' && value.trim() === '')
+                    ) {
+                      return '';
+                    }
+                    return `<p><strong>${key}:</strong> ${formatValue(value)}</p>`;
+                  })
+                  .join('')}
+                ${
+                  item.lat && item.lon
+                    ? `
+                <div class="card-actions">
+                    ${item.id ? `<button id="card-notification-btn-${index}" onclick="event.stopPropagation(); sendNotification('card-notification-btn-${index}')" class="card-notification-btn" style="position: relative; z-index: 3500;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>განაახლე ინფორმაცია!</button>` : ''}
+                </div>
+                `
+                    : ''
+                }
             </div>`;
 
     card.innerHTML = cardContent;
