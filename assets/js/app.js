@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', function () {
   // Initialize instruction tabs
   initInstructionTabs();
 
+  // Initialize map style toggle
+  initMapStyleToggle();
+
   // Add form submission handler
   const notificationForm = document.getElementById('notification-form');
   if (notificationForm) {
@@ -24,6 +27,23 @@ document.addEventListener('DOMContentLoaded', function () {
   // Load data and initialize map
   loadData();
 });
+
+// Function to initialize map style toggle
+function initMapStyleToggle() {
+  // Set topo as the default active style
+  const topoOption = document.querySelector('.map-style-option[data-style="topo"]');
+  if (topoOption) {
+    topoOption.classList.add('active');
+  }
+
+  // Add click handlers to all style options
+  document.querySelectorAll('.map-style-option').forEach(option => {
+    option.addEventListener('click', function () {
+      const style = this.getAttribute('data-style');
+      toggleMapStyle(style);
+    });
+  });
+}
 
 // Function to load data from CSV files
 function loadData() {
@@ -145,7 +165,7 @@ function createSidebarCards() {
 
     const needsTitle =
       item[
-        `საჭიროება(ები)
+      `საჭიროება(ები)
 (საკვები, მედიკამენტები, ევაკუაცია, ექიმი, საწვავი, დათოლვა, სხვა)    `
       ];
 
@@ -167,32 +187,31 @@ function createSidebarCards() {
                     <span class="id-label">ID:</span> <span class="id-value">${item.id || ''}</span>
                 </p>
                 ${filteredKeys
-                  .slice(1)
-                  .map(key => {
-                    // Skip empty values or values that only contain colons or @:
-                    const value = item[key];
-                    if (
-                      value === undefined ||
-                      value === null ||
-                      value === '' ||
-                      value === ':' ||
-                      value === '@:' ||
-                      (typeof value === 'string' && value.trim() === '')
-                    ) {
-                      return '';
-                    }
-                    return `<p><strong>${key}:</strong> ${formatValue(value)}</p>`;
-                  })
-                  .join('')}
-                ${
-                  item.lat && item.lon
-                    ? `
+        .slice(1)
+        .map(key => {
+          // Skip empty values or values that only contain colons or @:
+          const value = item[key];
+          if (
+            value === undefined ||
+            value === null ||
+            value === '' ||
+            value === ':' ||
+            value === '@:' ||
+            (typeof value === 'string' && value.trim() === '')
+          ) {
+            return '';
+          }
+          return `<p><strong>${key}:</strong> ${formatValue(value)}</p>`;
+        })
+        .join('')}
+                ${item.lat && item.lon
+        ? `
                 <div class="card-actions">
                     ${item.id ? `<button id="card-notification-btn-${index}" onclick="event.stopPropagation(); sendNotification('card-notification-btn-${index}')" class="card-notification-btn" style="position: relative; z-index: 3500;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>განაახლე ინფორმაცია!</button>` : ''}
                 </div>
                 `
-                    : ''
-                }
+        : ''
+      }
             </div>`;
 
     card.innerHTML = cardContent;
