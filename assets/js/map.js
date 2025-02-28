@@ -23,10 +23,10 @@ function initializeMap() {
                 'raster-tiles': {
                     type: 'raster',
                     tiles: [
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+                        'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
                     ],
                     tileSize: 256,
-                    attribution: '© OpenStreetMap Contributors'
+                    attribution: '© <a href="https://carto.com/attributions">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 }
             },
             layers: [{
@@ -37,6 +37,7 @@ function initializeMap() {
                 maxzoom: 19
             }]
         },
+        maxZoom: 17.3,  // Set maximum zoom limit to 17.3
         bounds: [
             [bounds.west - 0.1, bounds.south - 0.1], // Add padding to bounds
             [bounds.east + 0.1, bounds.north + 0.1]
@@ -48,7 +49,8 @@ function initializeMap() {
 
     // Add navigation controls
     const nav = new maplibregl.NavigationControl({
-        visualizePitch: true
+        visualizePitch: true,
+        maxZoom: 17.3 // Ensure navigation controls respect the max zoom
     });
     map.addControl(nav, 'top-right');
 
@@ -69,6 +71,13 @@ function initializeMap() {
         setupMarkers();
         setupMapLayers();
         addMapEventHandlers();
+        
+        // Add zoom limit check for mouse wheel and touch zoom
+        map.on('zoom', function() {
+            if (map.getZoom() > 17.3) {
+                map.setZoom(17.3);
+            }
+        });
         
         // Define the legend element variable
         const legendElement = document.querySelector('.map-legend');
@@ -694,7 +703,7 @@ function showMyLocation() {
                 // Fly to the user's location
                 map.flyTo({
                     center: [userLng, userLat],
-                    zoom: 13,
+                    zoom: Math.min(13, 17.3), // Limit zoom to max 17.3
                     duration: 1500
                 });
 

@@ -202,10 +202,13 @@ function createSidebarCards() {
                 // This ensures the card and pin are highlighted immediately
                 simpleHighlightPolygon(map, index);
                 
+                // Set zoom level to 12, ensuring it doesn't exceed the max of 17.5
+                const zoomLevel = Math.min(12, 17.5);
+                
                 // Then fly to the location
                 map.flyTo({
                     center: [item.lon, item.lat],
-                    zoom: 12
+                    zoom: zoomLevel
                 });
                 
                 // Log the map state
